@@ -607,6 +607,7 @@ def init_groq_client():
     return client
 
 
+
 def rag_simple(query, retriever, client, top_k=3):
     """
     Basic RAG:
