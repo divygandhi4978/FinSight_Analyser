@@ -1,12 +1,11 @@
 # Data Insighter
 
 - From Reports : 
-    1. Extract Investor Presentation 3
-    2. Concall 3
-    3. News 20
-    4. Future Business plan extraction best possible
+    1. Concall 3 : 13-12-25
+    2. Future Business plan extraction best possible : 13-12-25
+    3. News 20 : 13-12-25
 
 <!-- ## Running 2 sub parts
 Run
-python extract_screener_financials.py LEMONTREE
-python BusinessOverview.py --company "Lemon Tree" --overview -->
+python .\concall_investor.py https://www.screener.in/company/LEMONTREE/consolidated/   
+python .\news_links.py LEMONTREE
