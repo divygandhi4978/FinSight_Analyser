@@ -184,9 +184,10 @@ class TFIDFRetriever:
         return [self.docs[i] for i in idxs]
 
 # ================= LLM =================
-
+api1="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" #Krish
+api2="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"
 def call_llm(prompt):
-    client = Groq(api_key="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")
+    client = Groq(api_key=api2)
     r = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}],
@@ -282,6 +283,68 @@ def main():
 
     print("========== FINAL OUTPUT ==========\n")
     print(result)
+
+
+#External Caller
+def get_future_plans_from_screener(
+    screener_url: str,
+    max_concalls: int = MAX_CONCALLS,
+    max_presentations: int = MAX_PRESENTATIONS
+):
+    """
+    Public API for external callers.
+
+    ALWAYS returns a stable schema.
+    Concall / presentation availability is explicitly signaled.
+    """
+
+    company = screener_url.rstrip("/").split("/")[-2]
+
+    concall_links = find_concall_links(screener_url)[:max_concalls]
+    presentation_links = find_investor_presentation_links(screener_url)[:max_presentations]
+
+    # Case 1: No documents at all
+    if not concall_links and not presentation_links:
+        return {
+            "company": company,
+            "source": screener_url,
+            "concall_available": False,
+            "documents_used": [],
+            "future_plans_and_calls": "Not disclosed"
+        }
+
+    docs = []
+    docs += load_docs(concall_links, "concall")
+    docs += load_docs(presentation_links, "investor_presentation")
+
+    # Case 2: Links found but text extraction failed
+    if not docs:
+        return {
+            "company": company,
+            "source": screener_url,
+            "concall_available": False,
+            "documents_used": [],
+            "future_plans_and_calls": "Not disclosed"
+        }
+
+    retriever = TFIDFRetriever(docs)
+    extracted_text = extract_future_plans(company, retriever)
+
+    return {
+        "company": company,
+        "source": screener_url,
+        "concall_available": True,
+        "documents_used": [
+            {
+                "type": d["meta"]["type"],
+                "source": d["meta"]["source"],
+                "date_hint": d["meta"]["date_hint"]
+            }
+            for d in docs
+        ],
+        "future_plans_and_calls": extracted_text or "Not disclosed"
+    }
+
 
 if __name__ == "__main__":
     main()

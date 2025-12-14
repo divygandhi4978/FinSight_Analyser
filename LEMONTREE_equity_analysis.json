@@ -1,0 +1,98 @@
+{
+  "company": "LEMONTREE",
+  "timestamp": "2025-12-14T19:33:43.229487",
+  "business_fundamentals": {
+    "what_the_company_does": "Lemon Tree Hotels Limited (LTHL) is a leading hospitality player in India, operating a diverse portfolio of upscale, upper-midscale, midscale, and economy hotels across seven brands. The company has a strong presence in major metro cities and key business and leisure destinations, with a total key count of 10,269 as of March 2025.",
+    "competitive_position": "LTHL is a leading hospitality player in India, with a strong presence in major metro cities and key business and leisure destinations. The company's diversified portfolio and strong brand presence position it well to compete in the Indian hospitality market.",
+    "pricing_power": "moderate",
+    "capital_intensity": "moderate"
+  },
+  "financial_quality": {
+    "roe": "NA",
+    "roce": "NA",
+    "debt_to_equity": "NA",
+    "assessment": "LTHL has a strong financial risk profile, with a significant reduction in its cost of borrowing over the year to 8.01% in Q1 FY26, compared to 8.80% in Q1 FY25. However, the company's financial leverage is moderate, with a debt-to-equity ratio of NA."
+  },
+  "moat_and_competition": {
+    "moat_sources": [
+      "Diversified portfolio of hotels",
+      "Strong brand presence"
+    ],
+    "moat_sustainability": "moderate"
+  },
+  "management_and_concall": {
+    "key_guidance_points": [
+      "The company expects to see a corresponding expansion in EBITDA margin due to the reduction in expenses/investments.",
+      "The company expects all the expenses/investments in renovation, technology, and ex-gratia payment to employees to reduce to 5% of revenue in the next year, before stabilizing at 2% of revenue by FY28 onwards."
+    ],
+    "execution_risks": [
+      "Slower-than-expected ramp-up of new assets may impact profitability.",
+      "The hospitality industry is susceptible to cyclicality."
+    ],
+    "guidance_credibility": "moderate"
+  },
+  "sector_view": {
+    "sector_trend": "up",
+    "tailwinds": [
+      "Growing demand for hospitality services in India",
+      "Increasing tourism in India"
+    ],
+    "headwinds": [
+      "Cyclicality in the hospitality industry",
+      "Competition from other hospitality players"
+    ]
+  },
+  "valuation": {
+    "method_used": "EV/EBITDA",
+    "bull_case": {
+      "assumptions": [
+        "Strong growth in revenue and EBITDA",
+        "Improving financial risk profile"
+      ],
+      "valuation_range": "20-25",
+      "upside_pct": "20-25%"
+    },
+    "base_case": {
+      "assumptions": [
+        "Moderate growth in revenue and EBITDA",
+        "Stable financial risk profile"
+      ],
+      "valuation_range": "15-20",
+      "upside_pct": "10-15%"
+    },
+    "bear_case": {
+      "assumptions": [
+        "Weak growth in revenue and EBITDA",
+        "Deteriorating financial risk profile"
+      ],
+      "valuation_range": "10-15",
+      "downside_pct": "10-15%"
+    }
+  },
+  "risk_summary": {
+    "business_risks": [
+      "Slower-than-expected ramp-up of new assets may impact profitability.",
+      "The hospitality industry is susceptible to cyclicality."
+    ],
+    "financial_risks": [
+      "Deteriorating financial risk profile",
+      "Increasing debt levels"
+    ],
+    "macro_risks": [
+      "Cyclicality in the hospitality industry",
+      "Global economic downturn"
+    ]
+  },
+  "final_view": {
+    "recommendation": "buy",
+    "conviction_score": 60,
+    "key_reasons": [
+      "Strong financial risk profile",
+      "Growing demand for hospitality services in India"
+    ],
+    "what_can_go_wrong": [
+      "Slower-than-expected ramp-up of new assets may impact profitability.",
+      "The hospitality industry is susceptible to cyclicality."
+    ]
+  }
+}

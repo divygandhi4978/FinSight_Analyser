@@ -343,5 +343,43 @@ def main_print():
     # print to stdout (no file saves)
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
+def get_company_snapshot(
+    code: str,
+    include_financials: bool = True,
+    include_overview: bool = False,
+    overview_provider: str = "groq",
+    overview_top_k: int = 3
+) -> Dict[str, Any]:
+    """
+    Unified, additive API.
+    - Does NOT replace existing functions
+    - Can be safely imported by external programs
+    """
+
+    result: Dict[str, Any] = {
+        "code": code,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    }
+
+    if include_financials:
+        result["financials"] = get_financials(code)
+
+    if include_overview:
+        try:
+            # lazy import to avoid circular dependency
+            from .BusinessOverview import get_business_overview
+
+            overview = get_business_overview(
+                code=code,
+                provider=overview_provider,
+                top_k=overview_top_k
+            )
+            result["overview"] = overview
+        except Exception as e:
+            result["overview_error"] = str(e)
+
+    return result
+
+
 if __name__ == "__main__":
     main_print()

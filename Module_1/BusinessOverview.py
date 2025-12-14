@@ -39,7 +39,8 @@ HEADERS = {"User-Agent": "FinSightDevKey/1.0"}
 
 # ---------------------------
 # DEV KEY: paste your key here for quick local dev
-DEV_API_KEY = "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"
+# DEV_API_KEY = "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"  #api1
+DEV_API_KEY = "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"  #api2 KRISH
 
 # ------------------ HTTP helpers ------------------
 def http_get(url, timeout=20):
@@ -362,6 +363,59 @@ def main():
         print('Missing headings:', result.get('missing_headings'))
         print('\n--- Overview preview ---\n')
         print(result.get('overview')[:4000])
+
+def get_business_overview(
+    company: str = None,
+    code: str = None,
+    url: str = None,
+    provider: str = 'groq',
+    top_k: int = 3,
+    limit_links: int = 6,
+    word_limit: int = 900,
+):
+    """
+    External API-friendly entry point.
+    Returns a structured dict instead of printing.
+    NO logic change – wraps existing pipeline.
+    """
+
+    # 1. Scrape + extract
+    docs = scrape_and_extract(
+        company=company,
+        code=code,
+        url=url,
+        limit_links=limit_links
+    )
+
+    # 2. Build retriever
+    retriever = build_retriever_from_texts(docs)
+
+    # 3. Init LLM
+    client = init_llm_client(provider=provider)
+
+    # 4. Generate overview
+    result = generate_business_overview(
+        company_name=company or code or url,
+        retriever=retriever,
+        client=client,
+        provider=provider,
+        top_k=top_k,
+        word_limit=word_limit
+    )
+
+    # 5. Return everything useful (not just text)
+    return {
+        "input": {
+            "company": company,
+            "code": code,
+            "url": url,
+        },
+        "overview": result.get("overview"),
+        "word_count": result.get("word_count"),
+        "missing_headings": result.get("missing_headings"),
+        "sources": result.get("sources"),
+        "raw_docs_meta": [d.get("meta", {}) for d in docs],
+    }
 
 if __name__ == '__main__':
     main()
