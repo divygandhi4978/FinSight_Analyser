@@ -25,7 +25,8 @@ import sys
 # COMPANY_CODE = "ADANIPORTS"
 # COMPANY_CODE = "ITCHOTELS"
 # COMPANY_CODE = "LEMONTREE"
-COMPANY_CODE = "MAXHEALTH"
+# COMPANY_CODE = "MAXHEALTH"
+COMPANY_CODE = "EMBASSY"
 SCREENER_URL = f"https://www.screener.in/company/{COMPANY_CODE}/consolidated/"
 
 # ============================================================
