@@ -1,8 +1,8 @@
 {
   "company": "EMBASSY",
-  "timestamp": "2025-12-15T08:06:33.672446",
+  "timestamp": "2025-12-15T20:10:50.422311",
   "business_fundamentals": {
-    "what_the_company_does": "Embassy Office Parks REIT is a leading real estate investment trust (REIT) in India, with a portfolio of high-quality office and hospitality assets. The company has a strong track record of delivering stable revenue growth, driven by steady rentals, contractual escalation, and new leasing. Embassy REIT operates in India, with a focus on major cities such as Bengaluru, Pune, and Mumbai. The company's key customers are corporate occupiers, including IT and ITES companies, as well as hospitality customers. Embassy REIT's portfolio is diversified across various industries, including technology, finance, and healthcare.",
+    "what_the_company_does": "Embassy Office Parks REIT is a leading real estate investment trust (REIT) in India, with a portfolio of high-quality office and hospitality assets. The company has a strong track record of delivering stable revenue growth, driven by steady rentals, contractual escalation, and new leasing. Embassy REIT operates in India, with a focus on major cities such as Bengaluru, Pune, and Mumbai. The company's key customers are corporate occupiers, including IT and ITES companies, as well as hospitality customers. Embassy REIT's competitive position is underpinned by its high-quality portfolio, strong management team, and proactive approach to risk management.",
     "competitive_position": "Embassy REIT is a leading player in the Indian REIT market, with a strong track record of delivering stable revenue growth and excellent customer service. The company's competitive position is underpinned by its high-quality portfolio, strong management team, and proactive approach to risk management.",
     "pricing_power": "moderate",
     "capital_intensity": "high"
@@ -37,7 +37,7 @@
     "sector_trend": "up",
     "tailwinds": [
       "growth in the Indian real estate sector",
-      "increasing demand for office and hospitality spaces"
+      "increasing demand for office spaces"
     ],
     "headwinds": [
       "refinancing risks",
@@ -49,26 +49,26 @@
     "bull_case": {
       "assumptions": [
         "strong growth in the Indian real estate sector",
-        "increasing demand for office and hospitality spaces"
+        "increasing demand for office spaces"
       ],
-      "valuation_range": "₹200-₹250 per unit",
+      "valuation_range": "₹200-₹250",
       "upside_pct": "20%"
     },
     "base_case": {
       "assumptions": [
         "stable growth in the Indian real estate sector",
-        "moderate demand for office and hospitality spaces"
+        "moderate demand for office spaces"
       ],
-      "valuation_range": "₹150-₹200 per unit",
+      "valuation_range": "₹150-₹200",
       "upside_pct": "10%"
     },
     "bear_case": {
       "assumptions": [
         "weak growth in the Indian real estate sector",
-        "decreasing demand for office and hospitality spaces"
+        "decreasing demand for office spaces"
       ],
-      "valuation_range": "₹100-₹150 per unit",
-      "downside_pct": "20%"
+      "valuation_range": "₹100-₹150",
+      "downside_pct": "10%"
     }
   },
   "risk_summary": {

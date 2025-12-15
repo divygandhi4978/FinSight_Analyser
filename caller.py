@@ -26,7 +26,8 @@ import sys
 # COMPANY_CODE = "ITCHOTELS"
 # COMPANY_CODE = "LEMONTREE"
 # COMPANY_CODE = "MAXHEALTH"
-COMPANY_CODE = "EMBASSY"
+# COMPANY_CODE = "EMBASSY"
+COMPANY_CODE = "HINDZINC"
 SCREENER_URL = f"https://www.screener.in/company/{COMPANY_CODE}/consolidated/"
 
 # ============================================================
@@ -130,3 +131,21 @@ with open(output_file, "w", encoding="utf-8") as f:
 
 print("\n✅ Analysis completed successfully")
 print(f"📄 Output saved to: {output_file}")
+
+
+# ==============================
+# Caller of Report Maker
+import json
+from Module_4.report import generate_reports_from_data
+
+def main():
+    with open(f"./{COMPANY_CODE}_equity_analysis.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    result = generate_reports_from_data(data)
+
+    print("REPORTS GENERATED SUCCESSFULLY")
+    print("HTML:", result["html_path"])
+    print("PDF :", result["pdf_path"])
+
+main()
