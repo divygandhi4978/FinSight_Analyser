@@ -1,7 +1,6 @@
+#!/usr/bin/env python3
 import json
 import os
-
-from jinja2 import Template
 
 from reportlab.platypus import (
     SimpleDocTemplate,
@@ -15,194 +14,188 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # =========================================================
-# PATH RESOLUTION (ROBUST)
+# CONFIG
 # =========================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
-OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-
+OUTPUT_DIR = os.path.join(BASE_DIR, "../output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # =========================================================
-# HTML GENERATOR
+# PDF GENERATOR
 # =========================================================
-def generate_html(data: dict) -> str:
-    template_path = os.path.join(TEMPLATE_DIR, "report.html")
-
-    with open(template_path, "r", encoding="utf-8") as f:
-        template = Template(f.read())
-
-    html_content = template.render(data=data)
-
-    output_path = os.path.join(OUTPUT_DIR, f"{data['company']}_report.html")
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-
-    return output_path
-
-
-# =========================================================
-# PDF GENERATOR (PROFESSIONAL STYLING)
-# =========================================================
-def generate_pdf(data: dict) -> str:
-    pdf_path = os.path.join(OUTPUT_DIR, f"{data['company']}_report.pdf")
-    doc = SimpleDocTemplate(
-        pdf_path,
-        pagesize=A4,
-        rightMargin=36,
-        leftMargin=36,
-        topMargin=36,
-        bottomMargin=36
-    )
-
-    base_styles = getSampleStyleSheet()
-    story = []
-
-    # -------------------------
-    # STYLES
-    # -------------------------
-    TITLE_STYLE = ParagraphStyle(
-        name="TitleStyle",
-        parent=base_styles["Title"],
-        fontSize=20,
-        textColor=colors.HexColor("#0f172a"),
-        spaceAfter=16
-    )
-
-    SECTION_STYLE = ParagraphStyle(
-        name="SectionStyle",
-        fontSize=13,
-        fontName="Helvetica-Bold",
-        textColor=colors.HexColor("#1e3a8a"),
-        spaceAfter=8
-    )
-
-    BODY_STYLE = ParagraphStyle(
-        name="BodyStyle",
-        fontSize=10.5,
-        leading=14,
-        textColor=colors.HexColor("#1f2937"),
-        spaceAfter=6
-    )
-
-    # -------------------------
-    # TITLE
-    # -------------------------
-    story.append(
-        Paragraph(
-            f"{data['company']} – Equity Research Report",
-            TITLE_STYLE
-        )
-    )
-    story.append(Spacer(1, 12))
-
-    # -------------------------
-    # SECTION RENDERER
-    # -------------------------
-    def section_block(title: str, content: dict, bg_color):
-        table_data = []
-
-        # Section header
-        table_data.append([
-            Paragraph(title, SECTION_STYLE)
-        ])
-
-        # Section body
-        for key, value in content.items():
-            if isinstance(value, list):
-                value = ", ".join(value)
-
-            text = f"<b>{key.replace('_', ' ').title()}:</b> {value}"
-            table_data.append([
-                Paragraph(text, BODY_STYLE)
-            ])
-
-        table = Table(table_data, colWidths=[doc.width])
-        table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), bg_color),
-            ("BOX", (0, 0), (-1, -1), 0.6, colors.lightgrey),
-            ("INNERPADDING", (0, 0), (-1, -1), 10),
-            ("TOPPADDING", (0, 0), (-1, -1), 8),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ]))
-
-        story.append(table)
-        story.append(Spacer(1, 14))
-
-    # -------------------------
-    # SECTIONS (LIGHT, PROFESSIONAL SHADING)
-    # -------------------------
-    section_block(
-        "Business Fundamentals",
-        data["business_fundamentals"],
-        colors.HexColor("#fbfbfc")
-    )
-
-    section_block(
-        "Financial Quality",
-        data["financial_quality"],
-        colors.HexColor("#f6f8fa")
-    )
-
-    section_block(
-        "Moat & Competition",
-        data["moat_and_competition"],
-        colors.HexColor("#fbfbfc")
-    )
-
-    section_block(
-        "Management & Guidance",
-        data["management_and_concall"],
-        colors.HexColor("#f6f8fa")
-    )
-
-    section_block(
-        "Sector View",
-        data["sector_view"],
-        colors.HexColor("#fbfbfc")
-    )
-
-    section_block(
-        "Risk Summary",
-        data["risk_summary"],
-        colors.HexColor("#f6f8fa")
-    )
-
-    section_block(
-        "Final View",
-        data["final_view"],
-        colors.HexColor("#fbfbfc")
-    )
-
-    doc.build(story)
-    return pdf_path
-
-
-# =========================================================
-# DRIVER (JSON FILE)
-# =========================================================
-def generate_reports(json_path: str):
+def generate_ic_pdf(json_path: str) -> str:
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    html = generate_html(data)
-    pdf = generate_pdf(data)
+    report = data["investment_report"]
+    company = report["company"]
 
-    print("Generated:")
-    print(html)
-    print(pdf)
+    pdf_path = os.path.join(OUTPUT_DIR, f"{company}_IC_report.pdf")
 
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=A4,
+        leftMargin=40,
+        rightMargin=40,
+        topMargin=48,
+        bottomMargin=48
+    )
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    TITLE = ParagraphStyle(
+        "TITLE",
+        parent=styles["Title"],
+        fontSize=22,
+        textColor=colors.HexColor("#e5e7eb"),
+        spaceAfter=16
+    )
+
+    SECTION = ParagraphStyle(
+        "SECTION",
+        fontSize=14,
+        fontName="Helvetica-Bold",
+        textColor=colors.HexColor("#38bdf8"),
+        spaceAfter=10
+    )
+
+    BODY = ParagraphStyle(
+        "BODY",
+        fontSize=10.8,
+        leading=15,
+        textColor=colors.HexColor("#e5e7eb"),
+        spaceAfter=6
+    )
+
+    MUTED = ParagraphStyle(
+        "MUTED",
+        fontSize=10,
+        textColor=colors.HexColor("#94a3b8"),
+        spaceAfter=6
+    )
+
+    # =====================================================
+    # BACKGROUND
+    # =====================================================
+    def dark_bg(canvas, _):
+        canvas.setFillColor(colors.HexColor("#020617"))
+        canvas.rect(0, 0, A4[0], A4[1], stroke=0, fill=1)
+
+    # =====================================================
+    # CARD HELPER
+    # =====================================================
+    def card(title, lines):
+        story.append(Paragraph(title, SECTION))
+        content = []
+        for line in lines:
+            content.append(Paragraph(line, BODY))
+            content.append(Spacer(1, 4))
+
+        table = Table([[content]], colWidths=[doc.width])
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#020617")),
+            ("BOX", (0,0), (-1,-1), 0.6, colors.HexColor("#1e293b")),
+            ("INNERPADDING", (0,0), (-1,-1), 14),
+        ]))
+
+        story.append(table)
+        story.append(Spacer(1, 22))
+
+    # =====================================================
+    # HEADER
+    # =====================================================
+    story.append(Paragraph(f"{company} — Investment Committee Memo", TITLE))
+    story.append(Paragraph(
+        f"Decision Timestamp: {report['decision_timestamp']}",
+        MUTED
+    ))
+    story.append(Spacer(1, 18))
+
+    # =====================================================
+    # BUSINESS OVERVIEW
+    # =====================================================
+    bo = report["business_overview"]
+    card("Business Overview", [
+        bo["long_description"],
+        f"<b>Revenue Streams:</b> {', '.join(bo['business_model']['revenue_streams'])}",
+        f"<b>Cost Structure:</b> {', '.join(bo['business_model']['cost_structure'])}",
+        f"<b>Strengths:</b> {', '.join(bo['competitive_positioning']['strengths'])}",
+        f"<b>Weaknesses:</b> {', '.join(bo['competitive_positioning']['weaknesses'])}",
+    ])
+
+    # =====================================================
+    # FINANCIAL INTERPRETATION
+    # =====================================================
+    fi = report["financial_interpretation"]
+    card("Financial Interpretation", [
+        fi["data_quality_assessment"],
+        fi["profitability_insight"],
+        fi["leverage_and_balance_sheet_view"],
+        fi["cash_flow_view"],
+    ])
+
+    # =====================================================
+    # DECISION INPUTS
+    # =====================================================
+    di = report["decision_inputs_summary"]
+    card("Decision Inputs Summary", [
+        f"Business Quality: {di['business_quality']}",
+        f"Financial Resilience: {di['financial_resilience']}",
+        f"Capital Discipline: {di['capital_discipline']}",
+        f"Cash Generation: {di['cash_generation']}",
+        di["interpretation"],
+    ])
+
+    # =====================================================
+    # INVESTMENT THESIS
+    # =====================================================
+    it = report["investment_thesis"]
+    card("Investment Thesis", [
+        f"<b>Bull Case:</b> {' '.join(it['bull_case'])}",
+        f"<b>Base Case:</b> {it['base_case']}",
+        f"<b>Bear Case:</b> {' '.join(it['bear_case'])}",
+    ])
+
+    # =====================================================
+    # COMMITTEE DECISION
+    # =====================================================
+    cd = report["committee_decision"]
+
+    drivers = " ".join(
+        f"{d['factor']} ({d['impact']}): {d['rationale']}"
+        for d in cd["decision_drivers"]
+    ) or "None"
+
+    card("Committee Decision", [
+        f"<b>Final Decision:</b> {cd['final_decision']}",
+        f"<b>Confidence:</b> {cd['confidence']}",
+        f"<b>Decision Drivers:</b> {drivers}",
+        f"<b>Committee Summary:</b> {cd['committee_summary']}",
+    ])
+
+    # =====================================================
+    # MONITORING TRIGGERS
+    # =====================================================
+    mt = report["monitoring_triggers"]
+    card("Monitoring Triggers", [
+        f"<b>Upgrade to BUY if:</b> {' '.join(mt['upgrade_to_buy_if'])}",
+        f"<b>Downgrade to AVOID if:</b> {' '.join(mt['downgrade_to_avoid_if'])}",
+    ])
+
+    # =====================================================
+    # NEWS CONTEXT (NON-DECISION)
+    # =====================================================
+    if "news_context" in data:
+        nc = data["news_context"]
+        card("News Context (Non-Decision)", nc["sample_headlines"])
+
+    doc.build(story, onFirstPage=dark_bg, onLaterPages=dark_bg)
+    return pdf_path
 
 # =========================================================
-# EXTERNAL CALLER SUPPORT
+# CLI
 # =========================================================
-def generate_reports_from_data(data: dict) -> dict:
-    return {
-        "html_path": generate_html(data),
-        "pdf_path": generate_pdf(data)
-    }
-
-
 if __name__ == "__main__":
-    generate_reports("ntpcgreen.json")
+    path = os.path.join("../output", "MAXHEALTH_IC_decision.json")
+    print("Generated:", generate_ic_pdf(path))

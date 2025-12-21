@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 """
-Module-3: Integrated Equity Research Engine (Single File)
+Module-3: AI Investment Committee Simulator
+Deterministic + Explainable + Decision-First
 
-INPUTS:
-- b_overview  (dict)
-- financials  (dict)
-- concall     (dict)
-
-OUTPUT:
-- Valid structured JSON equity research report
-
-LLM:
-- Groq (llama-3.1-8b-instant)
-
-FAILS HARD if JSON is invalid.
+This module FORCES:
+- A Buy / Hold / Avoid decision
+- Explicit scoring logic
+- Clear failure conditions
 """
 
 import os
@@ -21,188 +14,244 @@ import json
 from datetime import datetime
 from groq import Groq
 
-# ================= CONFIG =================
+# ============================================================
+# CONFIG
+# ============================================================
 
 MODEL = "llama-3.1-8b-instant"
-MAX_TOKENS = 2500
 TEMPERATURE = 0.0
-MAX_CHARS = 3000
+MAX_TOKENS = 1600
 RETRIES = 2
 
-# ================= HELPERS =================
+MAX_TEXT_CHARS = 1000
 
-def clip(text, max_chars=MAX_CHARS):
-    if not text:
-        return ""
-    return text[:max_chars]
+# ============================================================
+# UTILS
+# ============================================================
 
-def normalize_inputs(b_overview, financials, concall):
-    """
-    Reduce noise before sending to LLM
-    """
+def clip(text, limit=MAX_TEXT_CHARS):
+    return text[:limit] if text else ""
+
+def safe_div(a, b):
+    return round(a / b, 2) if b else "NA"
+
+# ============================================================
+# SCHEMA RESOLUTION
+# ============================================================
+
+def resolve_financial_block(financials):
+    block = financials["financials"]["financials"]
+    required = {"profit_and_loss", "balance_sheet", "cash_flows"}
+    if not required.issubset(block.keys()):
+        raise RuntimeError("Invalid financial schema")
+    return block
+
+# ============================================================
+# DETERMINISTIC SIGNAL EXTRACTION
+# ============================================================
+
+def compute_core_signals(pnl, bs, cf):
+    revenue = pnl.get("sales", 0)
+    net_profit = pnl.get("net_profit", 0)
+    op_margin = pnl.get("operating_margin", "NA")
+
+    debt = bs.get("total_debt", 0)
+    equity = bs.get("equity", 0)
+    d_e = safe_div(debt, equity)
+
+    op_cf = cf.get("operating_cash_flow", 0)
+    capex = cf.get("capex", 0)
+
     return {
-        "business_overview": clip(b_overview.get("overview", "")),
-        "missing_headings": b_overview.get("missing_headings", []),
-
-        "ratios": financials.get("financials", {}).get("ratios", {}),
-        "profit_and_loss": financials.get("financials", {}).get("profit_and_loss", {}),
-        "balance_sheet": financials.get("financials", {}).get("balance_sheet", {}),
-        "cash_flows": financials.get("financials", {}).get("cash_flows", {}),
-
-        "concall_insights": clip(concall.get("future_plans_and_calls", ""))
+        "revenue": revenue,
+        "net_profit": net_profit,
+        "operating_margin": op_margin,
+        "debt_to_equity": d_e,
+        "operating_cash_flow": op_cf,
+        "capex": capex
     }
 
-# ================= PROMPT =================
+# ============================================================
+# ECONOMIC EARNINGS (OWNER VIEW)
+# ============================================================
 
-def build_prompt(company, data):
+def compute_owner_earnings(pnl, cf):
+    depreciation = pnl.get("depreciation", 0)
+    op_cf = cf.get("operating_cash_flow", 0)
+
+    maintenance_capex = depreciation * 0.6
+    owner_earnings = op_cf - maintenance_capex
+
+    return {
+        "owner_earnings": round(owner_earnings, 2),
+        "maintenance_capex_estimate": round(maintenance_capex, 2)
+    }
+
+# ============================================================
+# DECISION INPUT NORMALIZATION (CRITICAL)
+# ============================================================
+
+def normalize_decision_inputs(signals):
+    """
+    Convert messy reality → bounded 0–1 decision inputs.
+    Hard logic. No ML. Interview-safe.
+    """
+
+    def score_margin(m):
+        if m == "NA": return 0.5
+        if m > 20: return 0.85
+        if m > 15: return 0.7
+        if m > 10: return 0.55
+        return 0.3
+
+    def score_leverage(d):
+        if d == "NA": return 0.5
+        if d < 0.5: return 0.85
+        if d < 1.0: return 0.65
+        if d < 1.5: return 0.45
+        return 0.25
+
+    return {
+        "business_quality": score_margin(signals["operating_margin"]),
+        "financial_resilience": score_leverage(signals["debt_to_equity"]),
+        "capital_discipline": 0.6 if signals["capex"] > 0 else 0.4,
+        "cash_generation": 0.7 if signals["operating_cash_flow"] > 0 else 0.3
+    }
+
+# ============================================================
+# LLM PAYLOAD (TOKEN-SAFE)
+# ============================================================
+
+def build_llm_payload(b_overview, concall, decision_inputs, signals, owner_earnings):
+    return {
+        "business_overview": clip(b_overview.get("overview", "")),
+        "management_commentary": clip(concall.get("future_plans_and_calls", "")),
+
+        "decision_inputs": decision_inputs,
+        "financial_signals": signals,
+        "owner_earnings": owner_earnings,
+
+        "instructions": {
+            "note_on_data": "Zero or NA values indicate missing or incomplete data, not economic zero. Interpret cautiously."
+        }
+    }
+
+# ============================================================
+# PROMPT (THIS IS THE DIFFERENCE)
+# ============================================================
+def build_prompt(company, payload):
     return f"""
-You are generating a FINAL BACKEND JSON DATA SOURCE
-for a professional equity research web application.
+You are an AI Investment Committee preparing a FULL INVESTMENT REPORT.
 
-CRITICAL OUTPUT RULE (NON-NEGOTIABLE):
+Your responsibilities:
+- Interpret business fundamentals
+- Explain financial ambiguity
+- Take a BUY / HOLD / AVOID decision
+- Clearly state what would change the decision
+
+STRICT RULES:
+- DO NOT calculate new numbers
+- DO NOT invent facts
+- Use ONLY provided inputs
+- Treat 0 / NA as missing data
+- Scores are already computed (0–1)
 - Output VALID JSON ONLY
-- Do NOT include explanations, notes, markdown, or commentary
-- Do NOT wrap JSON in ```json or ``` blocks
-- The FIRST character must be '{' and the LAST character must be '}'
-- If you violate this, the output is invalid
+- Be detailed, analytical, and report-grade
 
-CRITICAL INSTRUCTIONS (NON-NEGOTIABLE):
-1. Output STRICTLY VALID JSON ONLY.
-2. This JSON is a BACKEND DATA CONTRACT for a web application.
-3. Every descriptive STRING field MUST be a DETAILED ANALYTICAL PARAGRAPH.
-4. Each paragraph MUST:
-   - Be logically structured
-   - Explain reasoning step-by-step
-   - Reference business model, sector dynamics, and financial implications
-5. ABSOLUTE MINIMUM LENGTH RULE:
-   - Any descriptive text field < 80 words is INVALID.
-   - If you cannot reach 80 words due to missing data, explain WHY and then write "NA".
-6. NEVER use null.
-7. NEVER invent numbers.
-8. Use "NA" ONLY AFTER explaining data unavailability in words.
-9. Do NOT repeat the same explanation across fields.
-10. Think like a long-term equity investor, not a news analyst.
+INPUT:
+{json.dumps(payload, indent=2)}
 
-REASONING ENFORCEMENT RULE:
-For EVERY classification you assign (pricing_power, moat_sustainability, capital_intensity, guidance_credibility, recommendation):
-- You MUST explicitly justify WHY that classification was chosen.
-- If justification is weak or data is missing, downgrade the classification.
-
-INVESTMENT PHILOSOPHY OVERLAY:
-Apply principles inspired by:
-- Warren Buffett (moat, predictability, capital discipline)
-- Rakesh Jhunjhunwala (growth + management quality)
-- Vijay Kedia (sector tailwinds + scale potential)
-- Ramdeo Agrawal (QGLP: Quality, Growth, Longevity, Price)
-
-CONTENT DEPTH RULE (STRICT):
-Each section should read like a **standalone analyst note**
-that could be shown directly on an investor-facing webpage.
-Shallow or generic text is considered FAILURE.
-
-SCORING RULE (MANDATORY):
-Conviction score (0–100):
-- Start at 50
-- +10 if ROCE > 15
-- +10 if debt_to_equity < 1
-- +10 if moat_sustainability = strong
-- -10 if financial_risk = high
-- -10 if guidance_credibility = low
-Clamp between 0 and 100
-
-VALUATION RULES:
-- Use PE for asset-light businesses
-- Use EV/EBITDA for capital-intensive businesses
-- If insufficient data → valuation_range = "NA"
-
-Also consider necessary parameter based on the company exists in which sector
-Assume that you are financial analyst and adviser as top analyst and also some or more follow Warren Buffet , Rakesh Jhunjhunwala, Vijay Kedia , Ramdev Agarval strategy
-
-COMPANY: {company}
-
-INPUT DATA (SOURCE OF TRUTH):
-{json.dumps(data, indent=2)}
-
-OUTPUT JSON SCHEMA (FOLLOW EXACTLY):
+OUTPUT JSON SCHEMA (MANDATORY):
 {{
   "company": "{company}",
-  "timestamp": "",
+  "decision_timestamp": "{datetime.utcnow().isoformat()}Z",
 
-  "business_fundamentals": {{
-    "what_the_company_does": "",
-    "competitive_position": "",
-    "pricing_power": "low | moderate | high | NA",
-    "capital_intensity": "low | moderate | high | NA"
-  }},
-
-  "financial_quality": {{
-    "roe": "NA",
-    "roce": "NA",
-    "debt_to_equity": "NA",
-    "assessment": ""
-  }},
-
-  "moat_and_competition": {{
-    "moat_sources": [],
-    "moat_sustainability": "weak | moderate | strong | NA"
-  }},
-
-  "management_and_concall": {{
-    "key_guidance_points": [],
-    "execution_risks": [],
-    "guidance_credibility": "low | moderate | high | NA"
-  }},
-
-  "sector_view": {{
-    "sector_trend": "up | flat | down | NA",
-    "tailwinds": [],
-    "headwinds": []
-  }},
-
-  "valuation": {{
-    "method_used": "PE | EV/EBITDA | NA",
-    "bull_case": {{
-      "assumptions": [],
-      "valuation_range": "NA",
-      "upside_pct": "NA"
+  "business_overview": {{
+    "long_description": "",
+    "business_model": {{
+      "revenue_streams": [],
+      "cost_structure": []
     }},
-    "base_case": {{
-      "assumptions": [],
-      "valuation_range": "NA",
-      "upside_pct": "NA"
-    }},
-    "bear_case": {{
-      "assumptions": [],
-      "valuation_range": "NA",
-      "downside_pct": "NA"
+    "competitive_positioning": {{
+      "strengths": [],
+      "weaknesses": []
     }}
   }},
 
-  "risk_summary": {{
-    "business_risks": [],
-    "financial_risks": [],
-    "macro_risks": []
+  "financial_interpretation": {{
+    "data_quality_assessment": "",
+    "profitability_insight": "",
+    "leverage_and_balance_sheet_view": "",
+    "cash_flow_view": ""
   }},
 
-  "final_view": {{
-    "recommendation": "strong_buy | buy | hold | avoid | sell",
-    "conviction_score": 0,
-    "key_reasons": [],
-    "what_can_go_wrong": []
+  "decision_inputs_summary": {{
+    "business_quality": 0.0,
+    "financial_resilience": 0.0,
+    "capital_discipline": 0.0,
+    "cash_generation": 0.0,
+    "interpretation": ""
+  }},
+
+  "investment_thesis": {{
+    "bull_case": [],
+    "bear_case": [],
+    "base_case": ""
+  }},
+
+  "committee_decision": {{
+    "final_decision": "BUY | HOLD | AVOID",
+    "confidence": 0.0,
+    "decision_drivers": [
+      {{
+        "factor": "",
+        "impact": "+ | -",
+        "rationale": ""
+      }}
+    ],
+    "decision_breakers": [],
+    "required_assumptions": [],
+    "committee_summary": ""
+  }},
+
+  "monitoring_triggers": {{
+    "upgrade_to_buy_if": [],
+    "downgrade_to_avoid_if": []
   }}
 }}
 """
 
-# ================= EXECUTOR =================
+# ============================================================
+# EXECUTOR
+# ============================================================
 
-def run_module_3(company, b_overview, financials, concall):
-    # client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    client = Groq(api_key="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") #API1
-    client = Groq(api_key="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") #API1
-    
+def run_investment_committee(company, b_overview, financials, concall):
 
-    normalized = normalize_inputs(b_overview, financials, concall)
-    prompt = build_prompt(company, normalized)
+    block = resolve_financial_block(financials)
+
+    signals = compute_core_signals(
+        block["profit_and_loss"],
+        block["balance_sheet"],
+        block["cash_flows"]
+    )
+
+    owner_earnings = compute_owner_earnings(
+        block["profit_and_loss"],
+        block["cash_flows"]
+    )
+
+    decision_inputs = normalize_decision_inputs(signals)
+
+    payload = build_llm_payload(
+        b_overview=b_overview,
+        concall=concall,
+        decision_inputs=decision_inputs,
+        signals=signals,
+        owner_earnings=owner_earnings
+    )
+    prompt = build_prompt(company, payload)
+
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     for attempt in range(RETRIES):
         response = client.chat.completions.create(
@@ -214,28 +263,21 @@ def run_module_3(company, b_overview, financials, concall):
 
         raw = response.choices[0].message.content.strip()
 
+# ---------- HARD JSON SANITIZATION ----------
+        if raw.startswith("```"):
+            raw = raw.strip("`")
+            raw = raw.replace("json\n", "", 1).strip()
+
         try:
-            parsed = json.loads(raw)
-            parsed["company"] = company
-            parsed["timestamp"] = datetime.now().isoformat()
-            return parsed
+            decision = json.loads(raw)
+            return {
+                "company": company,
+                "generated_at": datetime.now().isoformat(),
+                "decision_inputs": decision_inputs,
+                "financial_signals": signals,
+                "owner_earnings": owner_earnings,
+                "investment_report": decision
+            }
         except json.JSONDecodeError:
             if attempt == RETRIES - 1:
-                raise RuntimeError(f"Invalid JSON returned by LLM:\n{raw}")
-
-# ================= USAGE EXAMPLE =================
-
-if __name__ == "__main__":
-    # These must already exist (from Module-1 & Module-2)
-    # b_overview = ...
-    # financials = ...
-    # concall = ...
-
-    analysis = run_module_3(
-        company="LEMONTREE",
-        b_overview=b_overview,
-        financials=financials,
-        concall=concall
-    )
-
-    print(json.dumps(analysis, indent=2))
+                raise RuntimeError(f"INVALID JSON OUTPUT:\n{raw}")

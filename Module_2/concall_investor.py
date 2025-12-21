@@ -197,55 +197,103 @@ def call_llm(prompt):
     return r.choices[0].message.content.strip()
 
 # ================= EXTRACTION =================
+def extract_keyword_snippets(text, keywords, window=300, max_snippets=5):
+    """
+    Extracts small text snippets around keywords.
+    Deterministic. No LLM.
+    """
+    snippets = []
+    text_lower = text.lower()
 
-def build_prompt(company, contexts):
+    for kw in keywords:
+        pos = text_lower.find(kw.lower())
+        if pos == -1:
+            continue
+
+        start = max(0, pos - window)
+        end = min(len(text), pos + window)
+        snippet = text[start:end].strip()
+
+        if snippet and snippet not in snippets:
+            snippets.append(snippet)
+
+        if len(snippets) >= max_snippets:
+            break
+
+    return snippets
+def build_prompt(company, snippets):
     ctx = "\n\n".join(
-        f"SOURCE TYPE: {c['meta']['type']}\n"
-        f"SOURCE LINK: {c['meta']['source']}\n"
-        f"DATE HINT: {c['meta']['date_hint']}\n"
-        f"CONTENT:\n{c['content'][:3500]}"
-        for c in contexts
+        f"SOURCE TYPE: {s['meta']['type']}\n"
+        f"SOURCE LINK: {s['meta']['source']}\n"
+        f"DATE HINT: {s['meta']['date_hint']}\n"
+        f"SNIPPET:\n{s['snippet']}"
+        for s in snippets
     )
 
     return f"""
-You are an equity research analyst.
+You are a senior equity research analyst.
 
-Using ONLY the PRIMARY DISCLOSURES below for {company}
-(concall transcripts and investor presentations),
-extract and structure the following:
+Extract ONLY what is explicitly stated in the snippets.
+Do NOT infer. Do NOT guess.
 
-1. Important Management Calls (decisions, warnings, changes)
-2. Future Business Plans
-3. Expansion / Pipeline Details
-4. Capital Expenditure (CapEx) Plans
-5. Management Guidance & Outlook
-6. Timeline (with dates / FY where mentioned)
-7. Key Risks or Constraints highlighted
+Output VALID JSON ONLY.
 
-Rules:
-- Do NOT infer or guess.
-- Mention whether a point comes from CONCALL or INVESTOR PRESENTATION.
-- If a section is not mentioned, write: Not disclosed.
+JSON SCHEMA:
+{{
+  "analysis": {{
+    "important_management_calls": [],
+    "future_business_plans": [],
+    "expansion_pipeline": [],
+    "capex_plans": {{
+      "mentioned": false,
+      "details": []
+    }},
+    "management_guidance": [],
+    "key_risks_highlighted": [],
+    "timeline_summary": []
+  }},
+  "plain_english_summary": {{
+    "what_the_company_is_doing": "",
+    "where_the_company_is_investing": "",
+    "what_management_is_confident_about": "",
+    "what_can_go_wrong": "",
+    "big_picture_outlook": ""
+  }}
+}}
 
-CONTEXT:
+SNIPPETS:
 {ctx}
 """
 
+
 def extract_future_plans(company, retriever):
-    contexts = []
+    keyword_snippets = []
+
     for q in FUTURE_QUERIES:
-        contexts.extend(retriever.retrieve(q, top_k=2))
+        docs = retriever.retrieve(q, top_k=1)
 
-    # Deduplicate by source
-    seen = set()
-    uniq = []
-    for c in contexts:
-        sid = c["meta"]["source"]
-        if sid not in seen:
-            seen.add(sid)
-            uniq.append(c)
+        for d in docs:
+            snippets = extract_keyword_snippets(
+                d["content"],
+                keywords=[q],
+                window=250,
+                max_snippets=2
+            )
 
-    prompt = build_prompt(company, uniq)
+            for s in snippets:
+                keyword_snippets.append({
+                    "snippet": s,
+                    "meta": d["meta"]
+                })
+
+    # HARD STOP: no facts → no LLM
+    if not keyword_snippets:
+        return {
+            "analysis": {},
+            "plain_english_summary": {}
+        }
+
+    prompt = build_prompt(company, keyword_snippets)
     return call_llm(prompt)
 
 # ================= MAIN =================

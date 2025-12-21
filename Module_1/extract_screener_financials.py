@@ -323,7 +323,16 @@ def extract_all(code: str) -> Dict[str, Any]:
 
     financials["ratios"] = {"units": "mixed", "data": ratios_obj, "diag": ratios_diag}
 
-    final = {"source": url, "units": "Rs. Crores", "extracted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"), "financials": financials}
+    # final = {"source": url, "units": "Rs. Crores", "extracted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"), "financials": financials}
+    final = {
+    "schema_version": "financials.v1",
+    "source": url,
+    "units": "Rs. Crores",
+    "as_of": max(financials["profit_and_loss"]["periods"], default=None),
+    "extracted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "financials": financials
+}
+
     return final
 
 # new: public function to get financials (returns dict, no disk writes)
