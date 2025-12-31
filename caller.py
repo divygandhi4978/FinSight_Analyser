@@ -29,6 +29,8 @@ import os
 # ============================================================
 
 COMPANY_CODE = "CAMS"
+# COMPANY_CODE = "ABCAPITAL"
+# COMPANY_CODE = "BLACKBUCK"
 SCREENER_URL = f"https://www.screener.in/company/{COMPANY_CODE}/consolidated/"
 OUTPUT_DIR = "output"
 
