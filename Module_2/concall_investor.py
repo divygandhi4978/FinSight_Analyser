@@ -1,398 +1,269 @@
 #!/usr/bin/env python3
 """
-screener_concall_investor_future_plans_rag.py
+screener_future_plans.py
+========================
 
-SOURCE OF TRUTH:
-- Screener.in company page
+Autonomous equity research insight extractor.
 
 PIPELINE:
-Screener →
-  → Latest 3 Concall Transcripts
-  → Latest 3 Investor Presentations
-→ Text Extraction (PDF / HTML)
-→ RAG (TF-IDF)
-→ LLM (grounded)
-→ Important Calls + Future Business Plans
+Screener → Concall + Investor Presentations (scraped)
+→ Cache (./cache/)
+→ PDF / HTML Text Extraction
+→ Block Scoring → Trim Corpus
+→ Groq LLM → 1-Page Maker-Insight JSON
 
-No news. No guessing. Primary disclosures only.
+Public API:
+-----------
+result = get_future_plans_from_screener(url)
+
+Returns:
+{
+  "company": "...",
+  "source": "...",
+  "concall_available": true,
+  "documents_used": [...],
+  "future_plans_and_calls": {...}
+}
 """
 
-import requests
+import os
 import re
-import sys
+import json
+import time
+import hashlib
+import requests
 from io import BytesIO
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
-# ---------------- PDF ----------------
+# PDF
 try:
     import pdfplumber
     HAS_PDF = True
 except:
     HAS_PDF = False
 
-# ---------------- RAG ----------------
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
-# ---------------- LLM ----------------
+# LLM
 from groq import Groq
 
-# ================= CONFIG =================
+# ============================== CONFIG ==============================
 
-HEADERS = {
-    "User-Agent": "PolicyLens-ScreenerRAG/1.1"
-}
+HEADERS = {"User-Agent": "ScreenerFuturePlans/1.0"}
+CACHE_DIR = "./cache"
+os.makedirs(CACHE_DIR, exist_ok=True)
 
-MIN_TEXT_LEN = 800
-MAX_CONCALLS = 3
-MAX_PRESENTATIONS = 3
+MAX_DOCS = 6
+MIN_TEXT_LEN = 600
+MAX_CORPUS_LEN = 2800
 
-FUTURE_QUERIES = [
-    "future plans",
-    "expansion",
-    "capital expenditure",
-    "capex",
-    "pipeline",
-    "growth strategy",
-    "guidance",
-    "outlook",
-    "next year",
-    "next two years",
-    "FY26",
-    "FY27"
+KEYWORDS_FUTURE = [
+    "future", "outlook", "guidance", "capex", "expansion",
+    "pipeline", "growth", "trajectory", "demand", "FY", "next year"
 ]
 
-# ================= HELPERS =================
 
-def fetch_html(url):
+# ============================== CACHE ===============================
+
+def cache_path(url: str):
+    h = hashlib.md5(url.encode()).hexdigest()
+    return os.path.join(CACHE_DIR, h)
+
+def cached_fetch(url: str):
+    path = cache_path(url)
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return f.read()
     r = requests.get(url, headers=HEADERS, timeout=25)
     r.raise_for_status()
-    return r.text
+    with open(path, "wb") as f:
+        f.write(r.content)
+    return r.content
 
+# ============================== SCRAPER ============================
+
+def fetch_html(url):
+    return cached_fetch(url).decode("utf-8", errors="ignore")
+
+def find_links(screener_url, keywords, max_links):
+    soup = BeautifulSoup(fetch_html(screener_url), "lxml")
+    links = []
+    for a in soup.find_all("a", href=True):
+        t = (a.get_text() or "").lower()
+        h = a["href"].lower()
+        if any(k in t or k in h for k in keywords):
+            full = urljoin(screener_url, a["href"])
+            if full not in links:
+                links.append(full)
+    return links[:max_links]
+
+def find_concall_links(url):
+    return find_links(url, ["concall", "conference", "transcript"], 3)
+
+def find_presentation_links(url):
+    return find_links(url, ["presentation"], 3)
+
+# ============================== TEXT EXTRACTION =====================
 
 def extract_pdf_text(url):
     if not HAS_PDF:
         return None
     try:
-        r = requests.get(url, headers=HEADERS, timeout=25)
-        with pdfplumber.open(BytesIO(r.content)) as pdf:
-            text = "\n".join(p.extract_text() or "" for p in pdf.pages)
-        return text if len(text) > MIN_TEXT_LEN else None
+        data = cached_fetch(url)
+        with pdfplumber.open(BytesIO(data)) as pdf:
+            text = "\n".join((p.extract_text() or "") for p in pdf.pages)
+        return text if len(text) >= MIN_TEXT_LEN else None
     except:
         return None
 
+def extract_html_text(url):
+    try:
+        html = fetch_html(url)
+        soup = BeautifulSoup(html, "lxml")
+        for t in soup(["script", "style"]):
+            t.decompose()
+        text = " ".join(p.get_text(" ", strip=True) for p in soup.find_all("p"))
+        return text if len(text) >= MIN_TEXT_LEN else None
+    except:
+        return None
 
-def extract_html_text(html):
-    soup = BeautifulSoup(html, "lxml")
-    for t in soup(["script", "style", "noscript", "header", "footer"]):
-        t.decompose()
-    text = " ".join(p.get_text(" ", strip=True) for p in soup.find_all("p"))
-    return text if len(text) > MIN_TEXT_LEN else None
+def load_doc(url, dtype):
+    text = extract_pdf_text(url) if url.lower().endswith(".pdf") else extract_html_text(url)
+    if not text:
+        return None
+    return {"url": url, "type": dtype, "text": text, "len": len(text)}
 
+# ============================== SCORING =============================
 
-def extract_date_from_text(text):
-    """Best-effort date extraction"""
-    m = re.search(r"(Q[1-4]\s*FY\d{2,4}|FY\d{2,4}|March|June|September|December)\s*\d{0,4}", text, re.I)
-    return m.group(0) if m else "Date not explicitly mentioned"
+def score_block(block):
+    score = 0
+    low = block.lower()
+    for kw in KEYWORDS_FUTURE:
+        if kw in low:
+            score += 3
+    nums = re.findall(r"\b\d{1,4}\b", low)
+    score += min(len(nums), 3)
+    return score
 
-# ================= SCREENER LINK FINDERS =================
-
-def find_screener_links(screener_url, keywords, max_links):
-    html = fetch_html(screener_url)
-    soup = BeautifulSoup(html, "lxml")
-
-    links = []
-
-    for a in soup.find_all("a", href=True):
-        text = (a.get_text() or "").lower()
-        href = a["href"].lower()
-
-        if any(k in text or k in href for k in keywords):
-            full = urljoin(screener_url, a["href"])
-            links.append(full)
-
-    # de-duplicate while preserving order
-    uniq = []
-    for l in links:
-        if l not in uniq:
-            uniq.append(l)
-
-    return uniq[:max_links]
-
-
-def find_concall_links(screener_url):
-    return find_screener_links(
-        screener_url,
-        keywords=["concall", "conference call", "earnings call", "transcript"],
-        max_links=MAX_CONCALLS
-    )
+def extract_top_corpus(docs):
+    blocks = []
+    for d in docs:
+        parts = d["text"].split("\n")
+        for p in parts:
+            p = p.strip()
+            if not p or len(p) < 80:
+                continue
+            blocks.append({"text": p, "score": score_block(p), "src": d})
+    top = sorted(blocks, key=lambda x: x["score"], reverse=True)[:40]
+    corpus = "\n".join(b["text"] for b in top)[:MAX_CORPUS_LEN]
+    return corpus, top
 
 
-def find_investor_presentation_links(screener_url):
-    return find_screener_links(
-        screener_url,
-        keywords=["investor presentation", "presentation"],
-        max_links=MAX_PRESENTATIONS
-    )
+# ============================== LLM ================================
 
-# ================= DOCUMENT LOADER =================
+def call_llm(company, corpus):
+    api = "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"
+    if not api:
+        raise RuntimeError("Missing environment variable: GROQ_API_KEY")
+    client = Groq(api_key=api)
+    prompt = fprompt = f"""
+You are an equity analyst. You must extract ONLY quantifiable business facts. 
+Reject generic language. Reject opinions. Reject vague text. Only extract if the corpus states it exactly.
 
-def load_docs(links, doc_type):
-    docs = []
+RULES:
+- Never summarize with soft phrases. Use metrics or return null.
+- Extract CAGR, EBITDA margin %, ARR or ADR, debt, capacity, pipeline count, geography, dates, timelines, FY labels.
+- If values are not in text, do NOT invent them.
+- Prefer bullet-level atomic facts.
 
-    for link in links:
-        print(f"Fetching {doc_type}: {link}")
+Return JSON ONLY in EXACT schema below. No text outside JSON.
 
-        if link.lower().endswith(".pdf"):
-            text = extract_pdf_text(link)
-        else:
-            html = fetch_html(link)
-            text = extract_html_text(html)
+Schema:
+{{
+ "analysis": {{
+   "important_management_calls": [],
+   "future_business_plans": [],   // must include metric + timeline or leave empty
+   "expansion_pipeline": [],      // must include counts or assets
+   "capex_plans": {{"mentioned": false, "details": []}},
+   "management_guidance": [],     // must extract numeric guidance
+   "key_risks_highlighted": [],
+   "timeline_summary": []
+ }},
+ "plain_english_summary": {{
+   "priority_actions_next_12_months": "",
+   "where_capital_is_flowing": "",
+   "success_dependency": "",
+   "main_risk_trigger": "",
+   "big_picture_outlook": ""
+ }}
+}}
 
-        if not text:
-            continue
+CORPUS (SOURCE FACTS ONLY):
+{corpus}
+"""
 
-        docs.append({
-            "content": text,
-            "meta": {
-                "type": doc_type,
-                "source": link,
-                "date_hint": extract_date_from_text(text)
-            }
-        })
-
-    return docs
-
-# ================= RAG =================
-
-class TFIDFRetriever:
-    def __init__(self, docs):
-        self.docs = docs
-        texts = [d["content"] for d in docs]
-        self.vectorizer = TfidfVectorizer(
-            stop_words="english",
-            max_features=15000,
-            ngram_range=(1, 2)
-        )
-        self.matrix = self.vectorizer.fit_transform(texts)
-
-    def retrieve(self, query, top_k=3):
-        qv = self.vectorizer.transform([query])
-        sims = cosine_similarity(qv, self.matrix)[0]
-        idxs = sims.argsort()[::-1][:top_k]
-        return [self.docs[i] for i in idxs]
-
-# ================= LLM =================
-api1="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" #Krish
-api2="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"
-def call_llm(prompt):
-    client = Groq(api_key=api2)
     r = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
+        temperature=0,
         max_tokens=1000
     )
-    return r.choices[0].message.content.strip()
+    out = r.choices[0].message.content.strip()
+    try:
+        return json.loads(out)
+    except:
+        return {"raw_llm_output": out}
 
-# ================= EXTRACTION =================
-def extract_keyword_snippets(text, keywords, window=300, max_snippets=5):
-    """
-    Extracts small text snippets around keywords.
-    Deterministic. No LLM.
-    """
-    snippets = []
-    text_lower = text.lower()
+# ============================== PUBLIC API ==========================
 
-    for kw in keywords:
-        pos = text_lower.find(kw.lower())
-        if pos == -1:
-            continue
+def get_future_plans_from_screener(url: str):
+    company = url.rstrip("/").split("/")[-2].upper()
+    concalls = find_concall_links(url)
+    pres = find_presentation_links(url)
+    all_links = concalls + pres
 
-        start = max(0, pos - window)
-        end = min(len(text), pos + window)
-        snippet = text[start:end].strip()
-
-        if snippet and snippet not in snippets:
-            snippets.append(snippet)
-
-        if len(snippets) >= max_snippets:
-            break
-
-    return snippets
-def build_prompt(company, snippets):
-    ctx = "\n\n".join(
-        f"SOURCE TYPE: {s['meta']['type']}\n"
-        f"SOURCE LINK: {s['meta']['source']}\n"
-        f"DATE HINT: {s['meta']['date_hint']}\n"
-        f"SNIPPET:\n{s['snippet']}"
-        for s in snippets
-    )
-
-    return f"""
-You are a senior equity research analyst.
-
-Extract ONLY what is explicitly stated in the snippets.
-Do NOT infer. Do NOT guess.
-
-Output VALID JSON ONLY.
-
-JSON SCHEMA:
-{{
-  "analysis": {{
-    "important_management_calls": [],
-    "future_business_plans": [],
-    "expansion_pipeline": [],
-    "capex_plans": {{
-      "mentioned": false,
-      "details": []
-    }},
-    "management_guidance": [],
-    "key_risks_highlighted": [],
-    "timeline_summary": []
-  }},
-  "plain_english_summary": {{
-    "what_the_company_is_doing": "",
-    "where_the_company_is_investing": "",
-    "what_management_is_confident_about": "",
-    "what_can_go_wrong": "",
-    "big_picture_outlook": ""
-  }}
-}}
-
-SNIPPETS:
-{ctx}
-"""
-
-
-def extract_future_plans(company, retriever):
-    keyword_snippets = []
-
-    for q in FUTURE_QUERIES:
-        docs = retriever.retrieve(q, top_k=1)
-
-        for d in docs:
-            snippets = extract_keyword_snippets(
-                d["content"],
-                keywords=[q],
-                window=250,
-                max_snippets=2
-            )
-
-            for s in snippets:
-                keyword_snippets.append({
-                    "snippet": s,
-                    "meta": d["meta"]
-                })
-
-    # HARD STOP: no facts → no LLM
-    if not keyword_snippets:
-        return {
-            "analysis": {},
-            "plain_english_summary": {}
-        }
-
-    prompt = build_prompt(company, keyword_snippets)
-    return call_llm(prompt)
-
-# ================= MAIN =================
-
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python screener_concall_investor_future_plans_rag.py <SCREENER_URL>")
-        sys.exit(1)
-
-    screener_url = sys.argv[1]
-    company = screener_url.rstrip("/").split("/")[-2]
-
-    print("🔍 Finding concall links on Screener...")
-    concall_links = find_concall_links(screener_url)
-
-    print("🔍 Finding investor presentation links on Screener...")
-    presentation_links = find_investor_presentation_links(screener_url)
-
-    if not concall_links and not presentation_links:
-        print("❌ No concall or investor presentation links found.")
-        return
-
-    docs = []
-    docs += load_docs(concall_links, "concall")
-    docs += load_docs(presentation_links, "investor_presentation")
-
-    if not docs:
-        print("❌ Failed to extract text from all documents.")
-        return
-
-    retriever = TFIDFRetriever(docs)
-
-    print("\n🧠 Extracting future business plans & important calls...\n")
-    result = extract_future_plans(company, retriever)
-
-    print("========== FINAL OUTPUT ==========\n")
-    print(result)
-
-
-#External Caller
-def get_future_plans_from_screener(
-    screener_url: str,
-    max_concalls: int = MAX_CONCALLS,
-    max_presentations: int = MAX_PRESENTATIONS
-):
-    """
-    Public API for external callers.
-
-    ALWAYS returns a stable schema.
-    Concall / presentation availability is explicitly signaled.
-    """
-
-    company = screener_url.rstrip("/").split("/")[-2]
-
-    concall_links = find_concall_links(screener_url)[:max_concalls]
-    presentation_links = find_investor_presentation_links(screener_url)[:max_presentations]
-
-    # Case 1: No documents at all
-    if not concall_links and not presentation_links:
+    if not all_links:
         return {
             "company": company,
-            "source": screener_url,
+            "source": url,
             "concall_available": False,
             "documents_used": [],
             "future_plans_and_calls": "Not disclosed"
         }
 
     docs = []
-    docs += load_docs(concall_links, "concall")
-    docs += load_docs(presentation_links, "investor_presentation")
+    for l in all_links[:MAX_DOCS]:
+        d = load_doc(l, "concall" if l in concalls else "presentation")
+        if d:
+            docs.append(d)
 
-    # Case 2: Links found but text extraction failed
     if not docs:
         return {
             "company": company,
-            "source": screener_url,
+            "source": url,
             "concall_available": False,
             "documents_used": [],
             "future_plans_and_calls": "Not disclosed"
         }
 
-    retriever = TFIDFRetriever(docs)
-    extracted_text = extract_future_plans(company, retriever)
+    corpus, top = extract_top_corpus(docs)
+    insight = call_llm(company, corpus)
 
     return {
         "company": company,
-        "source": screener_url,
+        "source": url,
         "concall_available": True,
-        "documents_used": [
-            {
-                "type": d["meta"]["type"],
-                "source": d["meta"]["source"],
-                "date_hint": d["meta"]["date_hint"]
-            }
-            for d in docs
-        ],
-        "future_plans_and_calls": extracted_text or "Not disclosed"
+        "documents_used": [{"url": d["url"], "type": d["type"], "len": d["len"]} for d in docs],
+        "future_plans_and_calls": insight
     }
 
 
+# ============================== CLI MODE ===========================
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python screener_future_plans.py <SCREENER_URL>")
+        sys.exit(1)
+    url = sys.argv[1]
+    res = get_future_plans_from_screener(url)
+    print(json.dumps(res, indent=2))

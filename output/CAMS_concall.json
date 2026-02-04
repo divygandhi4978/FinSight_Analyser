@@ -1,0 +1,28 @@
+{
+  "company": "CAMS",
+  "source": "https://www.screener.in/company/CAMS/consolidated/",
+  "concall_available": true,
+  "documents_used": [
+    {
+      "type": "concall",
+      "source": "https://www.bseindia.com/stockinfo/AnnPdfOpen.aspx?Pname=f03bf524-a022-4f4d-ac3d-1720c41c0836.pdf",
+      "date_hint": "December 2025"
+    },
+    {
+      "type": "concall",
+      "source": "https://www.bseindia.com/stockinfo/AnnPdfOpen.aspx?Pname=f778e677-89fa-417f-b363-048c2329bb73.pdf",
+      "date_hint": "Q2 FY26 "
+    },
+    {
+      "type": "concall",
+      "source": "https://www.bseindia.com/stockinfo/AnnPdfOpen.aspx?Pname=aa92a203-5174-4670-8dbd-ccbb40039170.pdf",
+      "date_hint": "March"
+    },
+    {
+      "type": "investor_presentation",
+      "source": "https://digital.camsonline.com/cams/documents/analyst_meet/Investor%20Presentations.pdf",
+      "date_hint": "Q4 FY24 "
+    }
+  ],
+  "future_plans_and_calls": "{\n  \"analysis\": {\n    \"important_management_calls\": [\n      \"We typically take a cost expansion largely led by salary increases, increments and those kind of things, and wherever we have annual maintenance contracts wherever the price goes up.\",\n      \"We are maintaining our guidance of saying that we will see around 45% of margin on a steady-state basis,\"\n    ],\n    \"future_business_plans\": [\n      \"We are in for a period of sort of stability.\",\n      \"We do not have any major customers up for renewal.\"\n    ],\n    \"expansion_pipeline\": [\n      \"We are venturing or stepping into new markets to, expand our global presence as well.\"\n    ],\n    \"capex_plans\": {\n      \"mentioned\": true,\n      \"details\": [\n        \"Any guidance on capex for FY '26 and '27?\"\n      ]\n    },\n    \"management_guidance\": [\n      \"We will see around 45% of margin on a steady-state basis,\"\n    ],\n    \"key_risks_highlighted\": [\n      \"Further renegotiations that are expected in this year or early of next year that can impact the yield further.\",\n      \"Yields can be under pressure due to new customers scaling up.\"\n    ],\n    \"timeline_summary\": [\n      \"First quarter has seen the maximum strain on margins.\",\n      \"We do not have any major customers up for renewal.\"\n    ]\n  },\n  \"plain_english_summary\": {\n    \"what_the_company_is_doing\": \"Maintaining guidance of 45% margin on a steady-state basis.\",\n    \"where_the_company_is_investing\": \"Venturing into new markets to expand global presence.\",\n    \"what_management_is_confident_about\": \"Stability in the next two years.\",\n    \"what_can_go_wrong\": \"Further renegotiations that can impact yield, yields under pressure due to new customers.\",\n    \"big_picture_outlook\": \"Period of stability, no major customers up for renewal.\"\n  }\n}"
+}

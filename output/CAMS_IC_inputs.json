@@ -1,0 +1,23 @@
+{
+  "company": "CAMS",
+  "business_summary": "The company is a mutual funds transfer agency Operations primarily in India with select international presence",
+  "business_confidence": 0.4,
+  "decision_inputs": {
+    "business_quality": 0.5,
+    "financial_resilience": 0.5,
+    "capital_discipline": 0.4,
+    "cash_generation": 0.3
+  },
+  "financial_signals": {
+    "revenue": 0,
+    "net_profit": 0,
+    "operating_margin": "NA",
+    "debt_to_equity": "NA",
+    "operating_cash_flow": 0,
+    "capex": 0
+  },
+  "owner_earnings": {
+    "owner_earnings": 0.0,
+    "maintenance_capex_estimate": 0.0
+  }
+}
