@@ -1,376 +1,930 @@
-Good catch. You’re thinking correctly now.
-If your page **depends on sector-specific data (capacity, MW, PPAs, reserves, etc.)**, it breaks scalability. That’s amateur architecture.
-
-What you need is a **sector-agnostic, company-agnostic canonical Company Insight page** that:
-
-* Works for **banks, SaaS, FMCG, infra, manufacturing, energy**
-* Degrades gracefully when data is unavailable
-* Still looks intentional, not “missing data”
-
-Below is the **final generalized structure**. This is the version you should lock.
+## Project: **Healthcare QoQ Intelligence & Valuation System**
 
 ---
 
-# **Company Insight Page — Generalized, Scalable Architecture**
+# Project Identity
 
-This is the **single template**. Sector-specific data plugs in optionally.
+**Project Name:**
+Healthcare Sector Intelligence & Investment Monitoring System
 
----
+**Primary Objective:**
+Build a professional-grade system that:
 
-## **0. Page Header (Universal Identity Layer)**
+* Tracks **Indian hospital companies**
+* Updates data **quarter-by-quarter**
+* Computes **financial metrics**
+* Runs **DCF valuations**
+* Detects **risk signals**
+* Compares peers
+* Generates **investment reports**
+* Sends investor alerts
 
-**Purpose:** Context + credibility
+Final Goal:
 
-**Always available**
-
-* Company Name | Ticker | Exchange
-* Sector | Industry
-* Market Cap
-* Current Price + % Change
-* Last Data Refresh Timestamp
-
-**Actions**
-
-* Add to Watchlist
-* Export
-* Recompute Model
-
-No analysis here. Just grounding.
+**A personal research terminal similar to institutional tools — but focused on one sector.**
 
 ---
 
-## **1. Investment Snapshot (Universal Decision Layer)**
+# Sector Coverage
 
-**Purpose:** Immediate signal
+Industry:
 
-**Always shown**
+**Indian Hospital Chains**
 
-* Intrinsic Value (Base Case)
-* Current Market Price
-* Upside / Downside (%)
-* Valuation Status
-  → Undervalued / Fair / Overvalued (rules-based)
-* Confidence Band (Bear / Base / Bull)
+Companies:
 
-**Optional**
+* Apollo Hospitals
+* Fortis Healthcare
+* Max Healthcare
+* Narayana Health
+* Rainbow Children’s Medicare
 
-* Price vs Intrinsic mini-chart
+Time Coverage:
 
-If this is missing, the page is useless.
+**8–12 quarters**
 
----
+Minimum.
 
-## **2. Business Overview (Abstracted, Not Operational)**
-
-**Purpose:** Understand revenue logic without sector bias
-
-**Always shown**
-
-* One-line business description (≤25 words)
-* Primary revenue drivers (textual categories, not assets)
-* Customer type (B2B / B2C / Govt / Mixed)
-
-**Optional**
-
-* Revenue by segment (if disclosed)
-* Revenue by geography (if disclosed)
-
-No factories. No MW. No store count assumptions.
+Not optional.
 
 ---
 
-## **3. Growth & Scale Indicators (Generalized Replacement for Assets)**
+# MASTER SYSTEM FLOW
 
-**Purpose:** Replace “capacity/assets” with scalable proxies
+This is your **global execution flow**.
 
-**Always available (derived)**
+Follow strictly.
 
-* Revenue growth (1Y, 3Y CAGR)
-* Asset growth OR Capital employed growth
-* Employee growth (if available)
-* Operating leverage indicator
+```text
+Collect Financial Reports
+        ↓
+Parse Documents
+        ↓
+Extract Financial Data
+        ↓
+Store Structured Database
+        ↓
+Compute Ratios
+        ↓
+Run QoQ Trend Engine
+        ↓
+Run Valuation Engine
+        ↓
+Extract Risks (LLM)
+        ↓
+Compare Peer Companies
+        ↓
+Generate Investment Memo
+        ↓
+Send Investor Alerts
+        ↓
+Update Dashboard
+```
 
-**Optional (sector-dependent)**
-
-* User / subscriber growth
-* Volume growth
-* Order book growth
-* AUM growth (financials)
-
-This works for **any business model**.
-
----
-
-## **4. Financial Performance (Three-Statement Core)**
-
-**Purpose:** Universal financial engine
-
-### Income Statement
-
-* Revenue trend
-* EBITDA & margins
-* Net income trend
-* Margin expansion / contraction flag
-
-### Balance Sheet
-
-* Total assets
-* Total debt
-* Net debt
-* Liquidity ratios
-
-### Cash Flow
-
-* Operating cash flow
-* Free cash flow (FCFF or FCFE)
-* CapEx intensity
-* Cash conversion quality
-
-No assumptions. Just facts + trends.
+Everything flows through this pipeline.
 
 ---
 
-## **5. Financial Health & Stability**
+# PROJECT FOLDER STRUCTURE
 
-**Purpose:** Risk-adjusted quality view
+Create this first.
 
-**Always shown**
+```text
+healthcare-intelligence/
+│
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   ├── models/
+│
+├── src/
+│   ├── parser/
+│   ├── extraction/
+│   ├── finance/
+│   ├── valuation/
+│   ├── risk/
+│   ├── alerts/
+│
+├── database/
+│
+├── dashboard/
+│
+├── reports/
+│
+├── notebooks/
+│
+├── config/
+│
+└── README.md
+```
 
-* Leverage ratios
-* Interest coverage
-* Working capital trend
-* Cash adequacy indicator
-
-**Flags**
-
-* Balance sheet stress
-* Cash flow mismatch
-* Refinancing risk (rule-based)
-
-This replaces sector-specific risk heuristics.
-
----
-
-## **6. Valuation Core (Fully Universal)**
-
-**Purpose:** Your product’s spine
-
-### DCF Summary
-
-* Equity value
-* Value per share
-* WACC (expandable)
-* Terminal growth
-
-### Assumptions Panel
-
-* Revenue growth
-* Operating margin
-* Reinvestment / CapEx proxy
-* WACC components
-
-### Sensitivity Analysis
-
-* WACC × Terminal Growth
-
-### Relative Valuation
-
-* P/E
-* EV/EBITDA
-* P/B (where applicable)
-* Historical multiple range
-
-No sector exceptions. Financials are universal.
+This structure signals professionalism.
 
 ---
 
-## **7. Quality & Return Metrics**
+# PHASE 0 — System Initialization
 
-**Purpose:** Separate quality from growth
+## Objective
 
-**Always shown**
+Set up development environment.
 
-* ROIC vs WACC
+---
+
+## Tasks
+
+[ ] Create GitHub repository
+
+[ ] Setup Python virtual environment
+
+[ ] Install core libraries:
+
+```text
+pandas
+numpy
+fastapi
+sqlalchemy
+psycopg2
+pymupdf
+matplotlib
+plotly
+openai
+python-dotenv
+```
+
+[ ] Setup PostgreSQL database
+
+[ ] Create database schema
+
+Tables:
+
+```sql
+companies
+documents
+financial_metrics
+financial_ratios
+valuations
+risk_signals
+peer_comparison
+alerts
+```
+
+---
+
+## Deliverable
+
+✔ Working dev environment
+✔ Database ready
+
+---
+
+# PHASE 1 — Data Collection (Finance Foundation)
+
+## Objective
+
+Build raw financial dataset.
+
+This is where real finance begins.
+
+---
+
+## Tasks
+
+[ ] Create company metadata file:
+
+```text
+companies.csv
+```
+
+Include:
+
+* Company name
+* Ticker
+* Sector
+
+---
+
+[ ] Download investor presentations
+
+For each company:
+
+Collect:
+
+* Last 8 quarterly presentations
+* Last 2 annual reports
+
+Store:
+
+```text
+data/raw/apollo/
+data/raw/fortis/
+data/raw/max/
+data/raw/narayana/
+data/raw/rainbow/
+```
+
+---
+
+[ ] Verify readability
+
+Open each manually.
+
+No corrupted files.
+
+---
+
+## Finance Relevance
+
+You learn:
+
+* Where companies disclose data
+* How investor communication works
+
+---
+
+## Deliverable
+
+✔ Dataset created
+✔ 50–70 PDFs collected
+
+---
+
+# PHASE 2 — Document Parsing Engine
+
+## Objective
+
+Convert PDFs → structured text.
+
+---
+
+## Tasks
+
+[ ] Build parser:
+
+File:
+
+```text
+src/parser/pdf_loader.py
+```
+
+---
+
+[ ] Extract full text
+
+Use:
+
+PyMuPDF
+
+---
+
+[ ] Store output:
+
+```text
+data/processed/text/
+```
+
+Format:
+
+```json
+{
+ "company": "Apollo",
+ "quarter": "Q1FY24",
+ "text": "..."
+}
+```
+
+---
+
+## Tech Relevance
+
+You build:
+
+* File ingestion pipeline
+* Text extraction logic
+
+---
+
+## Deliverable
+
+✔ All documents parsed
+
+---
+
+# PHASE 3 — Financial Data Extraction
+
+## Objective
+
+Extract structured finance data.
+
+This is core analyst work.
+
+---
+
+## Extract Fields
+
+Income Statement:
+
+* Revenue
+* EBITDA
+* Net Profit
+
+Balance Sheet:
+
+* Debt
+* Equity
+
+Cash Flow:
+
+* Operating Cash Flow
+* CapEx
+
+---
+
+## Tasks
+
+[ ] Create extractor:
+
+```text
+src/extraction/financial_parser.py
+```
+
+---
+
+[ ] Build regex logic
+
+Example:
+
+```python
+revenue_pattern = r"Revenue\s*₹?\s*([\d,]+)"
+```
+
+---
+
+[ ] Validate manually
+
+Cross-check with PDF.
+
+---
+
+[ ] Store data
+
+Table:
+
+```sql
+financial_metrics
+```
+
+---
+
+## Finance Relevance
+
+You learn:
+
+* Financial statement structure
+* KPI extraction
+
+---
+
+## Deliverable
+
+✔ Clean financial dataset
+
+---
+
+# PHASE 4 — Financial Ratio Engine
+
+## Objective
+
+Compute meaningful financial ratios.
+
+---
+
+## Ratios
+
+Profitability:
+
+* EBITDA Margin
+* Net Margin
+
+Leverage:
+
+* Debt-to-Equity
+
+Liquidity:
+
+* Current Ratio
+
+Efficiency:
+
+* Asset Turnover
+
+Return:
+
 * ROE
 * ROA
-* Margin stability score
-* Earnings consistency score
-
-**Output**
-
-* Quality Score (0–100)
-* Return Sustainability Indicator
-
-No “moat” storytelling. Numbers only.
 
 ---
 
-## **8. Peer & Sector Comparison**
+## Tasks
 
-**Purpose:** Relative reality check
+[ ] Build ratio module:
 
-**Always shown**
-
-* Revenue growth vs peers
-* Margin vs peers
-* ROIC / ROE vs peers
-* Valuation multiples vs peers
-
-**Highlight**
-
-* Structural strengths
-* Structural weaknesses
-
-Relative context beats absolute metrics.
+```text
+src/finance/ratios.py
+```
 
 ---
 
-## **9. Risk Intelligence (RAG-Based, Universal)**
+[ ] Store results
 
-**Purpose:** Filing intelligence at scale
+Table:
 
-**Always shown**
-
-* Top 3–5 risks extracted from filings
-* Risk category (Operational / Financial / Regulatory / Strategic)
-* Risk sentiment trend
-
-**For each risk**
-
-* Severity score
-* Source paragraph link
-* Change vs last filing
-
-This works for every public company.
+```sql
+financial_ratios
+```
 
 ---
 
-## **10. Management & Capital Allocation**
+## Finance Relevance
 
-**Purpose:** Decision-makers matter everywhere
-
-**Always shown**
-
-* CEO / CFO tenure
-* Capital allocation split:
-
-  * Reinvestment
-  * Acquisitions
-  * Buybacks
-  * Dividends
-  * Debt reduction
-
-**Effectiveness**
-
-* Return metrics trend post allocation
-
-No bios. Only outcomes.
+This is real company quality analysis.
 
 ---
 
-## **11. Market Signals (Optional Layer)**
+## Deliverable
 
-**Purpose:** Timing and sentiment
-
-**Optional**
-
-* 52-week range
-* Volume trend
-* Volatility
-* Technical indicators (RSI, MACD)
-
-**Interpretation**
-
-* Momentum score
-* Trend classification
-
-This can be toggled off for long-only users.
+✔ Ratio engine working
 
 ---
 
-## **12. AI Analyst Summary (Strictly Constrained)**
+# PHASE 5 — QoQ Trend Engine
 
-**Purpose:** Synthesis, not opinion
+## Objective
 
-**Structure**
-
-* What changed recently
-* What the market may be missing
-* Key downside trigger
-
-**Hard limits**
-
-* ≤150 words
-* Every claim linked to data
-
-If it can’t be sourced, it can’t be said.
+Detect financial momentum.
 
 ---
 
-## **13. News & Events Timeline**
+## Tasks
 
-**Purpose:** Keep insight current
+[ ] Compute QoQ growth:
 
-**Always shown**
-
-* Earnings
-* Guidance updates
-* Capital raises
-* Major regulatory / strategic events
-
-Filtered for materiality only.
+```python
+growth = (Q2 - Q1) / Q1
+```
 
 ---
 
-## **14. Auditability & Trust Layer**
+[ ] Flag trend changes:
 
-**Purpose:** Institutional credibility
-
-**Always shown**
-
-* Data sources
-* Filing dates used
-* Model version
-* Last recompute timestamp
-* Assumption change log
-
-This is what differentiates you from retail tools.
+* Revenue decline
+* Margin compression
+* Debt increase
 
 ---
 
-## **15. Action Layer (Universal Close)**
+[ ] Store analysis:
 
-**Purpose:** Turn insight into output
-
-**Actions**
-
-* Export model
-* Generate IC memo
-* Run scenarios
-* Set alerts
-* Share report
-
-Insight without action is dead weight.
+```sql
+qoq_analysis
+```
 
 ---
 
-## **Final Reality Check**
+## Finance Relevance
 
-This structure:
+Trend detection = research foundation.
 
-* Scales across **all sectors**
-* Avoids missing-data embarrassment
-* Signals **professional system design**
-* Is defendable in MBA interviews, VC demos, and fund conversations
+---
 
-If you had kept asset-heavy sections, the product would collapse outside infra/energy.
+## Deliverable
 
-This version won’t.
+✔ QoQ engine working
 
-If you want next:
+---
 
-* Wireframe this into **exact UI sections**
-* Map each block to **data availability logic**
-* Or design **fallback states when data is missing**
+# PHASE 6 — Valuation Engine (Critical)
 
-Say which one.
+## Objective
+
+Estimate intrinsic value.
+
+Most important financial component.
+
+---
+
+## Model Type
+
+**3-Stage FCFF DCF**
+
+---
+
+## Inputs
+
+* Revenue growth
+* EBITDA margin
+* CapEx
+* WACC
+* Terminal growth
+
+---
+
+## Tasks
+
+[ ] Build DCF model:
+
+```text
+src/valuation/dcf_model.py
+```
+
+---
+
+[ ] Build WACC calculation
+
+Include:
+
+* Risk-free rate
+* Beta
+* Cost of debt
+
+---
+
+[ ] Add sensitivity matrix:
+
+WACC × Growth.
+
+---
+
+## Finance Relevance
+
+This defines investment decisions.
+
+---
+
+## Deliverable
+
+✔ Intrinsic value system working
+
+---
+
+# PHASE 7 — Risk Intelligence Engine (LLM)
+
+## Objective
+
+Extract risk signals automatically.
+
+---
+
+## Tasks
+
+[ ] Extract risk sections
+
+From:
+
+Annual reports.
+
+---
+
+[ ] Send to LLM
+
+Prompt:
+
+```text
+Identify top financial risks.
+Classify severity.
+Provide evidence lines.
+```
+
+---
+
+[ ] Store risk signals:
+
+```sql
+risk_signals
+```
+
+---
+
+## Finance Relevance
+
+Risk analysis is core research skill.
+
+---
+
+## Deliverable
+
+✔ Risk insights generated
+
+---
+
+# PHASE 8 — Peer Comparison Engine
+
+## Objective
+
+Compare companies across sector.
+
+---
+
+## Metrics
+
+* Revenue growth
+* EBITDA margin
+* ROE
+* Valuation
+
+---
+
+## Tasks
+
+[ ] Build comparison module:
+
+```text
+src/finance/peer_compare.py
+```
+
+---
+
+[ ] Rank companies
+
+Generate:
+
+```text
+Top performer
+Weakest performer
+Median performer
+```
+
+---
+
+## Finance Relevance
+
+Relative positioning matters more than absolute numbers.
+
+---
+
+## Deliverable
+
+✔ Peer engine working
+
+---
+
+# PHASE 9 — Investment Memo Generator
+
+## Objective
+
+Create professional research output.
+
+---
+
+## Sections
+
+* Company Overview
+* Financial Trends
+* Risk Signals
+* Valuation Summary
+* Investment Thesis
+
+---
+
+## Tasks
+
+[ ] Build report template
+
+[ ] Export PDF
+
+Store:
+
+```text
+reports/
+```
+
+---
+
+## Finance Relevance
+
+Communication is critical in research.
+
+---
+
+## Deliverable
+
+✔ Research report generated
+
+---
+
+# PHASE 10 — Notification System
+
+## Objective
+
+Send investor alerts.
+
+---
+
+## Trigger Conditions
+
+* New quarter uploaded
+* Risk increased
+* Valuation changed
+
+---
+
+## Tasks
+
+[ ] Setup SMTP
+
+[ ] Send alert email
+
+Example:
+
+```text
+Apollo margin declined.
+Risk increased.
+```
+
+---
+
+## Deliverable
+
+✔ Alert system working
+
+---
+
+# PHASE 11 — Dashboard Interface
+
+## Objective
+
+Visualize insights.
+
+---
+
+## Display
+
+* Revenue trend
+* Margin trend
+* Valuation
+* Risk signals
+
+---
+
+## Tasks
+
+[ ] Build UI
+
+Use:
+
+* Streamlit or React
+
+---
+
+[ ] Add filters
+
+* Company
+* Quarter
+
+---
+
+## Deliverable
+
+✔ Interactive UI ready
+
+---
+
+# PHASE 12 — Deployment
+
+## Objective
+
+Make system public.
+
+---
+
+## Tasks
+
+[ ] Dockerize system
+
+[ ] Deploy to cloud
+
+Options:
+
+* Render
+* AWS
+
+---
+
+## Deliverable
+
+✔ Live public system
+
+---
+
+# QUARTERLY UPDATE WORKFLOW
+
+Runs every quarter.
+
+```text
+New Earnings Released
+        ↓
+Upload New PDF
+        ↓
+Parse Document
+        ↓
+Extract Financial Data
+        ↓
+Update Database
+        ↓
+Recompute Valuation
+        ↓
+Update Risk Signals
+        ↓
+Send Alerts
+        ↓
+Update Dashboard
+```
+
+This makes your system:
+
+**Alive over time**
+
+Not static.
+
+---
+
+# WEEKLY PROGRESS TRACKER
+
+Use this.
+
+Tick every week.
+
+---
+
+## Week 1–2
+
+[ ] Setup environment
+[ ] Collect financial reports
+
+---
+
+## Week 3–4
+
+[ ] Build parser
+
+---
+
+## Week 5–6
+
+[ ] Extract financial data
+
+---
+
+## Week 7–8
+
+[ ] Ratio engine
+
+---
+
+## Week 9–10
+
+[ ] DCF valuation
+
+---
+
+## Week 11–12
+
+[ ] Risk extraction
+
+---
+
+## Week 13–14
+
+[ ] Dashboard + deployment
+
+---
+
+# FINAL OUTPUT OF THIS PROJECT
+
+You will have:
+
+✔ Sector intelligence platform
+✔ Financial valuation system
+✔ Risk detection engine
+✔ Investor notification workflow
+✔ Professional research outputs
+
+Not theory.
+
+Real infrastructure.
+
+---
+
+# What Makes This Truly Valuable
+
+If completed fully:
+
+This becomes:
+
+✔ MBA interview material
+✔ CFA-relevant artifact
+✔ Equity research-level system
+✔ Tech-finance hybrid proof
+
+Not a random project.
+
+---
