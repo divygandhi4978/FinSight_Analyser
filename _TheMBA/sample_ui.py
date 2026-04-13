@@ -717,3 +717,101 @@ st.sidebar.info(
 st.sidebar.success(
     "Deployment Active"
 )
+
+
+st.markdown("### Executive Intelligence Panel")
+
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric(
+    "Sector Growth Outlook",
+    "Strong",
+    "+2 Signals"
+)
+
+col2.metric(
+    "System Risk Level",
+    "Moderate",
+    "↑ Monitoring"
+)
+
+col3.metric(
+    "Valuation Signal",
+    "Neutral",
+    "±0%"
+)
+
+col4.metric(
+    "Coverage Status",
+    "5 Companies",
+    "Active"
+)
+
+st.markdown("---")
+
+
+st.markdown("## Sector Intelligence Summary")
+
+st.info("""
+Indian hospital chains continue to demonstrate stable occupancy growth
+driven by insurance penetration and urban demand expansion.
+
+Key Observations:
+
+• Occupancy trends remain stable across Tier-1 markets  
+• Capex expansion indicates long-term growth confidence  
+• Debt levels require monitoring in aggressive expansion models  
+
+Investment Lens:
+
+Sector fundamentals remain structurally strong,
+but valuation discipline remains critical.
+""")
+
+
+st.markdown("## Risk Intelligence Overview")
+
+risk_data = pd.DataFrame({
+    "Risk": [
+        "Debt Expansion",
+        "Doctor Cost Inflation",
+        "Insurance Dependency",
+        "Regulatory Pricing Risk"
+    ],
+    "Severity": [
+        "Medium",
+        "High",
+        "Medium",
+        "Low"
+    ]
+})
+
+st.dataframe(risk_data, use_container_width=True)
+
+st.markdown("## Valuation Commentary")
+
+st.warning("""
+DCF sensitivity indicates that valuation remains highly
+sensitive to WACC assumptions.
+
+Key Drivers:
+
+• Revenue growth stability  
+• EBITDA margin expansion  
+• Capex efficiency  
+
+Current View:
+
+Intrinsic value remains within fair value band
+under base-case assumptions.
+""")
+
+st.markdown("## System Status")
+
+status_col1, status_col2, status_col3 = st.columns(3)
+
+status_col1.success("Data Pipeline Active")
+
+status_col2.info("LLM Risk Engine Ready")
+
+status_col3.success("Dashboard Synced")
