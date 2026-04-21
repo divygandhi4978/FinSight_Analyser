@@ -8,58 +8,14 @@ from data_loader import initialize_portfolio_data
 from cleaner import clean_portfolio
 from returns_engine import run_returns_engine
 
-import os
-
 
 
 # =====================================
-# SAVE ALL DATAFRAMES AS CSV
+# DISABLED CSV STORAGE (IMPORTANT)
 # =====================================
 
-def save_all_to_csv(system, base_path="output_csv"):
-
-    os.makedirs(base_path, exist_ok=True)
-
-    def save_dict(data, prefix=""):
-
-        if isinstance(data, dict):
-
-            for key, value in data.items():
-
-                new_prefix = (
-                    f"{prefix}_{key}"
-                    if prefix else key
-                )
-
-                save_dict(value, new_prefix)
-
-        elif isinstance(data, pd.DataFrame):
-
-            filename = f"{prefix}.csv"
-
-            filepath = os.path.join(
-                base_path,
-                filename
-            )
-
-            try:
-
-                data.to_csv(
-                    filepath,
-                    index=False
-                )
-
-                print(
-                    f"Saved: {filepath}"
-                )
-
-            except Exception as e:
-
-                print(
-                    f"Failed saving {prefix}: {e}"
-                )
-
-    save_dict(system)
+# CSV saving removed — not needed in runtime
+# Prevents slow loads and disk writes
 
 
 
@@ -105,7 +61,7 @@ def repair_dataframe(df):
 
 
 # =====================================
-# FAKE HISTORY (fallback safety)
+# SAFE HISTORY GENERATOR
 # =====================================
 
 def generate_fake_history():
@@ -116,7 +72,7 @@ def generate_fake_history():
 
     value = 1000000
 
-    for i in range(120):
+    for i in range(180):
 
         change = np.random.normal(
             0.001,
@@ -182,15 +138,17 @@ def build_system():
 
 from ui.home import render_home
 from ui.performance import render_performance
-from engine.mf_engine import run_mf_engine
-from ui.mf import render_mf_page
-from engine.stocks_engine import run_stock_engine
-from ui.stocks import render_stock_page
-from engine.fd_engine import run_fd_engine
-from ui.fd import render_fd_page
-from engine.research_engine import run_research_engine
-from ui.research import render_research_page
+
 from engine.performance import run_performance_engine
+from engine.mf_engine import run_mf_engine
+from engine.stocks_engine import run_stock_engine
+from engine.fd_engine import run_fd_engine
+from engine.research_engine import run_research_engine
+
+from ui.mf import render_mf_page
+from ui.stocks import render_stock_page
+from ui.fd import render_fd_page
+from ui.research import render_research_page
 
 
 
@@ -199,8 +157,11 @@ from engine.performance import run_performance_engine
 # =====================================
 
 st.set_page_config(
+
     page_title="FinSight : Portfolio Analytics",
+
     layout="wide"
+
 )
 
 
@@ -211,57 +172,125 @@ st.set_page_config(
 
 @st.cache_data(
     show_spinner=True,
-    ttl=600   # auto-refresh every 10 min
+    ttl=600
 )
 
 def load_full_system():
 
     system = build_system()
 
-    # Ensure history
+    portfolio = system.get("portfolio", {})
 
-    if "history_daily" not in system["portfolio"]:
+    # =========================
+    # Ensure history exists
+    # =========================
 
-        system["portfolio"]["history_daily"] = (
+    if "history_daily" not in portfolio:
+
+        portfolio["history_daily"] = (
             generate_fake_history()
         )
 
-    if len(system["portfolio"]["history_daily"]) < 5:
+    if len(
+        portfolio["history_daily"]
+    ) < 10:
 
-        system["portfolio"]["history_daily"] = (
+        portfolio["history_daily"] = (
             generate_fake_history()
         )
 
 
 
-    # Run engines
+    # =========================
+    # RUN ENGINES SAFELY
+    # =========================
 
-    system["performance"] = run_performance_engine(
-        system["portfolio"]
-    )
+    try:
 
-    system["mf"] = run_mf_engine(
-        system["portfolio"]
-    )
+        system["performance"] = (
+            run_performance_engine(
+                portfolio
+            )
+        )
 
-    system["stocks"] = run_stock_engine(
-        system["portfolio"]
-    )
+    except Exception as e:
 
-    system["fd"] = run_fd_engine(
-        system["portfolio"]
-    )
+        print("Performance engine failed:", e)
 
-    system["research"] = run_research_engine(
-        system["portfolio"]
-    )
+        system["performance"] = {}
+
+
+
+    try:
+
+        system["mf"] = (
+            run_mf_engine(
+                portfolio
+            )
+        )
+
+    except Exception as e:
+
+        print("MF engine failed:", e)
+
+        system["mf"] = {}
+
+
+
+    try:
+
+        system["stocks"] = (
+            run_stock_engine(
+                portfolio
+            )
+        )
+
+    except Exception as e:
+
+        print("Stock engine failed:", e)
+
+        system["stocks"] = {}
+
+
+
+    try:
+
+        system["fd"] = (
+            run_fd_engine(
+                portfolio
+            )
+        )
+
+    except Exception as e:
+
+        print("FD engine failed:", e)
+
+        system["fd"] = {}
+
+
+
+    try:
+
+        system["research"] = (
+            run_research_engine(
+                portfolio
+            )
+        )
+
+    except Exception as e:
+
+        print("Research engine failed:", e)
+
+        system["research"] = {}
+
+
 
     return system
 
 
 
 # =====================================
-# REFRESH BUTTON (FIXED)
+# REFRESH BUTTON
 # =====================================
 
 if st.sidebar.button("🔄 Refresh Latest Data"):
@@ -277,7 +306,7 @@ if st.sidebar.button("🔄 Refresh Latest Data"):
 
 
 # =====================================
-# SYSTEM LOADING (FINAL FIX)
+# SYSTEM LOAD CONTROL
 # =====================================
 
 def get_system():
@@ -285,7 +314,7 @@ def get_system():
     if "system" not in st.session_state:
 
         loading_msg = st.info(
-            "Loading portfolio data — fetching latest data. This may take up to 40 seconds."
+            "Loading portfolio data — fetching latest market data. This may take up to 40 seconds."
         )
 
         with st.spinner(
@@ -341,9 +370,11 @@ if page == "Home":
     render_home(system)
 
 
+
 elif page == "Performance":
 
     render_performance(system)
+
 
 
 elif page == "Mutual Funds":
@@ -351,14 +382,17 @@ elif page == "Mutual Funds":
     render_mf_page(system)
 
 
+
 elif page == "Stocks":
 
     render_stock_page(system)
 
 
+
 elif page == "Fixed Deposits":
 
     render_fd_page(system)
+
 
 
 elif page == "Research":
