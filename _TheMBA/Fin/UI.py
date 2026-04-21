@@ -1,212 +1,180 @@
 import streamlit as st
 import altair as alt
 import pandas as pd
-from datetime import datetime
 from app import build_system
 
-# ==========================================
-# 1. THEME & UI ENGINE
-# ==========================================
+# ==========================
+# 1. PREMIUM DARK THEME (CSS)
+# ==========================
 st.set_page_config(
-    page_title="AlphaStream | Terminal",
-    page_icon="💎",
+    page_title="Alpha Terminal",
+    page_icon="📟",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Advanced CSS for Card-based UI and custom fonts
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    /* Main Background and Font */
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
     
-    html, body, [class*="css"]  {
+    .main {
+        background-color: #050505;
         font-family: 'Inter', sans-serif;
     }
-    
-    /* Metric Card Styling */
-    div[data-testid="metric-container"] {
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 15px 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+
+    /* Metric Card - Terminal Style */
+    [data-testid="metric-container"] {
+        background-color: #0E1117;
+        border: 1px solid #1E293B;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
     }
     
-    /* Tab Styling */
+    [data-testid="stMetricLabel"] {
+        color: #94A3B8;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #10B981 !important; /* Neon Emerald */
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Tabs Styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
+        background-color: #050505;
+        gap: 2px;
     }
 
     .stTabs [data-baseweb="tab"] {
-        height: 45px;
-        white-space: pre-wrap;
-        font-weight: 600;
-        font-size: 14px;
-        color: #888;
+        background-color: #0E1117;
+        border: 1px solid #1E293B;
+        color: #64748B;
+        padding: 10px 30px;
+        font-family: 'JetBrains Mono', monospace;
     }
 
     .stTabs [aria-selected="true"] {
-        color: #6366f1 !important;
-        border-bottom-color: #6366f1 !important;
+        background-color: #1E293B !important;
+        color: #10B981 !important;
+        border-bottom: 2px solid #10B981 !important;
     }
 
-    /* Sidebar Clean-up */
-    .css-1d391kg {
-        background-color: #0e1117;
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #0E1117;
+        border-right: 1px solid #1E293B;
     }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #050505; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 2. DATA ORCHESTRATION
-# ==========================================
-@st.cache_data(ttl=3600)
-def get_processed_data():
-    sys = build_system()
-    # Normalize keys/data for UI safety
-    return sys
+# ==========================
+# 2. DATA LOAD
+# ==========================
+@st.cache_data
+def load():
+    return build_system()
 
-system = get_processed_data()
-portfolio = system.get("portfolio", {})
-returns = system.get("returns", {})
-allocations = system.get("allocations", {})
+system = load()
+portfolio, returns, allocations = system["portfolio"], system["returns"], system["allocations"]
 
-# ==========================================
-# 3. SIDEBAR NAVIGATION & FILTERS
-# ==========================================
+# ==========================
+# 3. SIDEBAR TERMINAL
+# ==========================
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3141/3141158.png", width=50)
-    st.title("AlphaStream")
-    st.caption("v2.1.0 Institutional Terminal")
-    
+    st.markdown("<h2 style='color: #10B981; font-family: monospace;'>[ ALPHA_v2.0 ]</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.code("STATUS: ENGINES_ONLINE\nREGION: US_EAST_1\nUSER: ROOT_AUTH", language="bash")
     st.markdown("---")
     
-    # Contextual controls
-    st.subheader("Global Filters")
-    date_range = st.date_input("Analysis Period", [])
-    sector_filter = st.multiselect("Focus Sectors", options=["Tech", "Finance", "Energy", "Health"], default=[])
-    
-    st.markdown("---")
-    if st.button("🔄 Force Rebuild System", use_container_width=True):
+    if st.button("> REBOOT_SYSTEM", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-# ==========================================
-# 4. KEY PERFORMANCE INDICATORS (KPIs)
-# ==========================================
-# Layout setup
+# ==========================
+# 4. KPI HUD (Head-Up Display)
+# ==========================
 growth_df = returns.get("growth_curve")
-cagr = returns.get("CAGR", 0)
+cagr = returns.get("CAGR")
 current_val = growth_df["Total_Value"].iloc[-1] if growth_df is not None else 0
-prev_val = growth_df["Total_Value"].iloc[-2] if growth_df is not None else 0
-daily_change = ((current_val - prev_val) / prev_val) * 100
 
-st.title("Executive Overview")
-
-# KPI Row
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-
-with kpi1:
-    st.metric("Portfolio Value", f"${current_val:,.2f}", delta=f"{daily_change:.2f}%")
-
-with kpi2:
-    st.metric("Annualized Return (CAGR)", f"{cagr*100:.2f}%", delta="0.45% vs Bench")
-
-with kpi3:
-    st.metric("Sharpe Ratio", "1.82", delta="Optimal", delta_color="normal")
-
-with kpi4:
-    # Logic to count unique stocks
-    stock_count = len(allocations.get("stock_allocation", []))
-    st.metric("Total Positions", stock_count, delta="Active")
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Equity_Total", f"${current_val:,.0f}", delta="LIVE")
+m2.metric("CAGR_Alpha", "N/A" if cagr is None else f"{cagr*100:.2f}%")
+m3.metric("Positions", len(allocations.get("stock_allocation", [])))
+m4.metric("Volatility", "LOW", delta="-1.2%", delta_color="inverse")
 
 st.markdown("---")
 
-# ==========================================
-# 5. WORKSPACE TABS
-# ==========================================
-t_perf, t_alloc, t_audit = st.tabs(["📈 Performance Analysis", "🎯 Asset Strategy", "🧾 Audit Logs"])
+# ==========================
+# 5. MAIN INTERFACE
+# ==========================
+t1, t2, t3 = st.tabs(["01_PERFORMANCE", "02_ALLOCATION", "03_RAW_LOGS"])
 
-# --- TAB 1: GROWTH ---
-with t_perf:
-    if growth_df is not None:
-        st.subheader("Equity Curve & Drawdown Analysis")
-        
-        # Fancy Gradient Chart
-        base = alt.Chart(growth_df).encode(x='Date:T')
-        
-        area = base.mark_area(
-            line={'color':'#6366f1', 'strokeWidth': 3},
+# --- GROWTH ---
+with t1:
+    growth = returns.get("growth_curve")
+    if growth is not None:
+        # Neon Green Area Chart
+        chart = alt.Chart(growth).mark_area(
+            line={'color':'#10B981', 'strokeWidth': 2},
             color=alt.Gradient(
                 gradient='linear',
-                stops=[alt.GradientStop(color='#6366f1', offset=0),
-                       alt.GradientStop(color='rgba(99, 102, 241, 0)', offset=1)],
+                stops=[alt.GradientStop(color='#10B981', offset=0),
+                       alt.GradientStop(color='rgba(16, 185, 129, 0)', offset=1)],
                 x1=1, x2=1, y1=1, y2=0
             )
         ).encode(
-            y=alt.Y("Total_Value:Q", title="Portfolio Value", scale=alt.Scale(zero=False)),
-            tooltip=['Date', alt.Tooltip('Total_Value', format='$,.2f')]
-        )
+            x=alt.X("Date:T", axis=alt.Axis(gridColor='#1E293B', title=None)),
+            y=alt.Y("Total_Value:Q", scale=alt.Scale(zero=False), axis=alt.Axis(gridColor='#1E293B', title=None)),
+            tooltip=["Date:T", "Total_Value:Q"]
+        ).properties(height=450).configure_view(strokeOpacity=0)
         
-        st.altair_chart(area.interactive(), use_container_width=True)
-        
-        # Sub-stats
-        c1, c2, c3 = st.columns(3)
-        c1.caption("**Volatility (σ):** 14.2%")
-        c2.caption("**Max Drawdown:** -8.4%")
-        c3.caption("**Best Month:** +12.1%")
+        st.altair_chart(chart, use_container_width=True)
 
-# --- TAB 2: ALLOCATION ---
-with t_alloc:
-    c_left, c_right = st.columns([1, 1], gap="large")
-    
-    seg_data = allocations.get("segment_allocation")
-    stk_data = allocations.get("stock_allocation")
-    
-    with c_left:
-        st.subheader("Sector Exposure")
-        if seg_data is not None:
-            donut = alt.Chart(seg_data).mark_arc(innerRadius=70, cornerRadius=10).encode(
-                theta=alt.Theta("Segment_%:Q"),
-                color=alt.Color("Segment:N", scale=alt.Scale(scheme='tableau20'), legend=None),
+# --- ALLOCATIONS ---
+with t2:
+    seg, stock = allocations.get("segment_allocation"), allocations.get("stock_allocation")
+    c1, c2 = st.columns(2)
+
+    with c1:
+        if seg is not None:
+            st.markdown("#### Sector_Distribution")
+            pie = alt.Chart(seg).mark_arc(innerRadius=70, stroke="#0E1117").encode(
+                theta="Segment_%:Q",
+                color=alt.Color("Segment:N", scale=alt.Scale(scheme='darkmulti')),
                 tooltip=["Segment", "Segment_%"]
             ).properties(height=350)
-            
-            # Layering text in the middle of donut
-            text = donut.mark_text(radius=0, size=20, weight="bold").encode(text=alt.value("Sectors"))
-            st.altair_chart(donut + text, use_container_width=True)
+            st.altair_chart(pie, use_container_width=True)
 
-    with c_right:
-        st.subheader("Concentration (Top 10)")
-        if stk_data is not None:
-            bars = alt.Chart(stk_data.head(10)).mark_bar(
-                cornerRadiusTopRight=10, 
-                cornerRadiusBottomRight=10,
-                color="#6366f1"
-            ).encode(
-                x=alt.X("Stock_%:Q", title=None),
-                y=alt.Y("Company_Name:N", sort='-x', title=None),
-                tooltip=["Company_Name", "Stock_%"]
+    with c2:
+        if stock is not None:
+            st.markdown("#### Top_Holdings_Weight")
+            bar = alt.Chart(stock.head(10)).mark_bar(color='#10B981', opacity=0.8).encode(
+                x=alt.X("Stock_%:Q", axis=alt.Axis(grid=False)),
+                y=alt.Y("Company_Name:N", sort="-x", axis=alt.Axis(grid=False)),
             ).properties(height=350)
-            st.altair_chart(bars, use_container_width=True)
+            st.altair_chart(bar, use_container_width=True)
 
-# --- TAB 3: DATA TABLES ---
-with t_audit:
-    st.subheader("Raw Ledger Integrity")
-    
-    # Custom display logic for all dataframes in portfolio
+# --- RAW TABLES ---
+with t3:
     for key, df in portfolio.items():
-        if isinstance(df, pd.DataFrame) and not df.empty:
-            with st.expander(f"📁 {key.upper()}", expanded=False):
-                # We use column_config to make the table look like a dashboard itself
-                st.dataframe(
-                    df,
-                    use_container_width=True,
-                    column_config={
-                        "Total_Value": st.column_config.NumberColumn("Market Value", format="$%0.2f"),
-                        "Stock_%": st.column_config.ProgressColumn("Weight", min_value=0, max_value=100, format="%f%%"),
-                        "Segment_%": st.column_config.ProgressColumn("Sector Weight", min_value=0, max_value=100, format="%f%%"),
-                        "Date": st.column_config.DateColumn("Timestamp"),
-                        "Change": st.column_config.NumberColumn("Change", format="%f%%", help="24h Change")
-                    }
-                )
+        if df is not None and not isinstance(df, dict) and not df.empty:
+            st.markdown(f"**LOG_ENTRY: {key.upper()}**")
+            st.dataframe(
+                df,
+                use_container_width=True,
+                column_config={
+                    "Stock_%": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%.1f%%", color="#10B981"),
+                    "Total_Value": st.column_config.NumberColumn(format="$%0.2f")
+                }
+            )
