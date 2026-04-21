@@ -8,14 +8,8 @@ from data_loader import initialize_portfolio_data
 from cleaner import clean_portfolio
 from returns_engine import run_returns_engine
 
-
-
-# =====================================
-# DISABLED CSV STORAGE (IMPORTANT)
-# =====================================
-
-# CSV saving removed — not needed in runtime
-# Prevents slow loads and disk writes
+# IMPORTANT — restore this
+from allocation import run_allocation_engine
 
 
 
@@ -99,7 +93,7 @@ def generate_fake_history():
 
 
 # =====================================
-# BUILD SYSTEM CORE
+# BUILD SYSTEM CORE (FIXED)
 # =====================================
 
 def build_system():
@@ -119,14 +113,40 @@ def build_system():
                 portfolio[k]
             )
 
+
+
+    # RETURNS
     returns_data = run_returns_engine(
         portfolio
     )
 
+
+
+    # ALLOCATIONS — FIXED
+    try:
+
+        allocation_data = run_allocation_engine(
+            portfolio
+        )
+
+    except Exception as e:
+
+        print(
+            "Allocation engine failed:",
+            e
+        )
+
+        allocation_data = {}
+
+
+
     return {
 
         "portfolio": portfolio,
-        "returns": returns_data
+
+        "returns": returns_data,
+
+        "allocations": allocation_data
 
     }
 
@@ -179,31 +199,34 @@ def load_full_system():
 
     system = build_system()
 
-    portfolio = system.get("portfolio", {})
+    portfolio = system.get(
+        "portfolio",
+        {}
+    )
 
-    # =========================
+
+
     # Ensure history exists
-    # =========================
 
     if "history_daily" not in portfolio:
 
-        portfolio["history_daily"] = (
-            generate_fake_history()
-        )
+        portfolio[
+            "history_daily"
+        ] = generate_fake_history()
+
+
 
     if len(
         portfolio["history_daily"]
     ) < 10:
 
-        portfolio["history_daily"] = (
-            generate_fake_history()
-        )
+        portfolio[
+            "history_daily"
+        ] = generate_fake_history()
 
 
 
-    # =========================
-    # RUN ENGINES SAFELY
-    # =========================
+    # Run Engines Safely
 
     try:
 
@@ -215,7 +238,10 @@ def load_full_system():
 
     except Exception as e:
 
-        print("Performance engine failed:", e)
+        print(
+            "Performance engine failed:",
+            e
+        )
 
         system["performance"] = {}
 
@@ -231,7 +257,10 @@ def load_full_system():
 
     except Exception as e:
 
-        print("MF engine failed:", e)
+        print(
+            "MF engine failed:",
+            e
+        )
 
         system["mf"] = {}
 
@@ -247,7 +276,10 @@ def load_full_system():
 
     except Exception as e:
 
-        print("Stock engine failed:", e)
+        print(
+            "Stock engine failed:",
+            e
+        )
 
         system["stocks"] = {}
 
@@ -263,7 +295,10 @@ def load_full_system():
 
     except Exception as e:
 
-        print("FD engine failed:", e)
+        print(
+            "FD engine failed:",
+            e
+        )
 
         system["fd"] = {}
 
@@ -279,7 +314,10 @@ def load_full_system():
 
     except Exception as e:
 
-        print("Research engine failed:", e)
+        print(
+            "Research engine failed:",
+            e
+        )
 
         system["research"] = {}
 
@@ -321,11 +359,13 @@ def get_system():
             "Fetching financial data — please wait..."
         ):
 
-            st.session_state.system = load_full_system()
+            st.session_state[
+                "system"
+            ] = load_full_system()
 
         loading_msg.empty()
 
-    return st.session_state.system
+    return st.session_state["system"]
 
 
 
