@@ -2,6 +2,9 @@ streamlit
 pandas
 numpy
 requests
-altair
-pyarrow
+plotly
+yfinance
 scipy
+pyarrow
+altair
+openpyxl
