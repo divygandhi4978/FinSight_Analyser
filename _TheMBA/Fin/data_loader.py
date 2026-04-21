@@ -187,27 +187,30 @@ def clean_table(df):
 # =====================================
 # LOAD TAB
 # =====================================
-
 def load_tab(tab_name):
-
+    # 1. Fetch the raw data from Google Sheets or Excel
     raw = fetch_raw_tab(tab_name)
 
     if raw is None:
-
         print(f"ERROR: {tab_name} fetch failed")
-
         return None
 
+    # 2. THE FIX: Identify tabs with complex/non-standard layouts.
+    # We return RAW for these so specialized cleaners can find the headers themselves.
+    special_tabs = ["FDs", "kvp", "MutualFunds"]
+
+    if tab_name in special_tabs:
+        print(f"Passing RAW data for specialized tab: {tab_name}")
+        return raw
+
+    # 3. For all other tabs, use the standard clean_table logic
     df = clean_table(raw)
 
     if df is None or df.empty:
-
-        print(f"WARNING: {tab_name} empty")
-
+        print(f"WARNING: {tab_name} returned empty after generic cleaning")
         return None
 
     return df
-
 
 # =====================================
 # PROCESS HISTORY

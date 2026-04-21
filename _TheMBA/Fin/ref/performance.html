@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Performance Analytics</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body {
+font-family: Arial;
+margin: 0;
+background: white;
+}
+
+.container {
+padding: 20px;
+}
+
+h1 {
+border-bottom: 1px solid black;
+padding-bottom: 10px;
+}
+
+.kpi-grid {
+
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 10px;
+margin-bottom: 20px;
+
+}
+
+.kpi {
+
+border: 1px solid black;
+padding: 10px;
+
+}
+
+.chart-grid {
+
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 20px;
+
+}
+
+.chart-box {
+
+border: 1px solid black;
+padding: 10px;
+height: 350px;
+
+}
+
+canvas {
+
+width: 100% !important;
+height: 100% !important;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Performance Analytics</h1>
+
+
+<div class="kpi-grid">
+
+<div class="kpi">
+<h3>Latest Value</h3>
+<p>1216496</p>
+</div>
+
+<div class="kpi">
+<h3>Daily Return</h3>
+<p>0.00396</p>
+</div>
+
+<div class="kpi">
+<h3>Cumulative Return</h3>
+<p>0.01013</p>
+</div>
+
+<div class="kpi">
+<h3>Max Drawdown</h3>
+<p>-0.004</p>
+</div>
+
+<div class="kpi">
+<h3>Volatility</h3>
+<p>0.003</p>
+</div>
+
+</div>
+
+
+
+<div class="chart-grid">
+
+<div class="chart-box">
+
+<h3>Portfolio Value Over Time</h3>
+
+<canvas id="portfolioTrend"></canvas>
+
+</div>
+
+
+<div class="chart-box">
+
+<h3>Daily Returns</h3>
+
+<canvas id="dailyReturnChart"></canvas>
+
+</div>
+
+
+<div class="chart-box">
+
+<h3>Drawdown Curve</h3>
+
+<canvas id="drawdownChart"></canvas>
+
+</div>
+
+
+<div class="chart-box">
+
+<h3>Rolling Volatility</h3>
+
+<canvas id="volatilityChart"></canvas>
+
+</div>
+
+
+<div class="chart-box">
+
+<h3>Return Distribution</h3>
+
+<canvas id="histogramChart"></canvas>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+
+// Portfolio Value Trend
+
+new Chart(
+
+document.getElementById("portfolioTrend"),
+
+{
+
+type: "line",
+
+data: {
+
+labels: [
+
+"19 Apr",
+
+"20 Apr",
+
+"21 Apr"
+
+],
+
+datasets: [{
+
+label: "Portfolio Value",
+
+data: [
+
+1206294,
+
+1211691,
+
+1216496
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Daily Returns
+
+new Chart(
+
+document.getElementById("dailyReturnChart"),
+
+{
+
+type: "line",
+
+data: {
+
+labels: [
+
+"20 Apr",
+
+"21 Apr"
+
+],
+
+datasets: [{
+
+label: "Daily Return",
+
+data: [
+
+0.00447,
+
+0.00396
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Drawdown Curve
+
+new Chart(
+
+document.getElementById("drawdownChart"),
+
+{
+
+type: "line",
+
+data: {
+
+labels: [
+
+"19 Apr",
+
+"20 Apr",
+
+"21 Apr"
+
+],
+
+datasets: [{
+
+label: "Drawdown",
+
+data: [
+
+0,
+
+-0.001,
+
+-0.004
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Rolling Volatility
+
+new Chart(
+
+document.getElementById("volatilityChart"),
+
+{
+
+type: "line",
+
+data: {
+
+labels: [
+
+"19 Apr",
+
+"20 Apr",
+
+"21 Apr"
+
+],
+
+datasets: [{
+
+label: "Volatility",
+
+data: [
+
+0.002,
+
+0.003,
+
+0.003
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Return Histogram
+
+new Chart(
+
+document.getElementById("histogramChart"),
+
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+
+"-0.01",
+
+"-0.005",
+
+"0",
+
+"0.005",
+
+"0.01"
+
+],
+
+datasets: [{
+
+label: "Frequency",
+
+data: [
+
+1,
+
+2,
+
+5,
+
+3,
+
+1
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+</script>
+
+</body>
+
+</html>

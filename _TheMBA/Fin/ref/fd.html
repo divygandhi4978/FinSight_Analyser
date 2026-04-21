@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Fixed Income & FD Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body {
+font-family: Arial;
+margin: 0;
+background: white;
+}
+
+.container {
+padding: 20px;
+}
+
+h1 {
+border-bottom: 1px solid black;
+padding-bottom: 10px;
+}
+
+.kpi-grid {
+
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 10px;
+margin-bottom: 20px;
+
+}
+
+.kpi {
+
+border: 1px solid black;
+padding: 10px;
+
+}
+
+.chart-grid {
+
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 20px;
+
+}
+
+.chart-box {
+
+border: 1px solid black;
+padding: 10px;
+height: 350px;
+
+}
+
+canvas {
+
+width: 100% !important;
+height: 100% !important;
+
+}
+
+table {
+
+width: 100%;
+border-collapse: collapse;
+margin-top: 20px;
+
+}
+
+th, td {
+
+border: 1px solid black;
+padding: 6px;
+text-align: left;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Fixed Deposits & Liquidity Dashboard</h1>
+
+
+<!-- KPI SECTION -->
+
+<div class="kpi-grid">
+
+<div class="kpi">
+<h3>Total FD Value</h3>
+<p>17100</p>
+</div>
+
+<div class="kpi">
+<h3>Average Interest Rate</h3>
+<p>7.8%</p>
+</div>
+
+<div class="kpi">
+<h3>Next Maturity (Days)</h3>
+<p>363</p>
+</div>
+
+<div class="kpi">
+<h3>Longest Maturity</h3>
+<p>902</p>
+</div>
+
+<div class="kpi">
+<h3>Active FD Count</h3>
+<p>2</p>
+</div>
+
+</div>
+
+
+
+<!-- CHART SECTION -->
+
+<div class="chart-grid">
+
+<div class="chart-box">
+
+<h3>Maturity Ladder (Days to Maturity)</h3>
+
+<canvas id="maturityLadder"></canvas>
+
+</div>
+
+
+
+<div class="chart-box">
+
+<h3>Principal Distribution</h3>
+
+<canvas id="principalDistribution"></canvas>
+
+</div>
+
+
+
+<div class="chart-box">
+
+<h3>Interest Rate Structure</h3>
+
+<canvas id="interestRateChart"></canvas>
+
+</div>
+
+
+
+<div class="chart-box">
+
+<h3>Liquidity Timeline</h3>
+
+<canvas id="liquidityTimeline"></canvas>
+
+</div>
+
+
+</div>
+
+
+
+<!-- FD TABLE -->
+
+<h2>Fixed Deposit Details</h2>
+
+<table>
+
+<tr>
+
+<th>FD ID</th>
+<th>Bank</th>
+<th>Principal</th>
+<th>Interest %</th>
+<th>Maturity Date</th>
+<th>Days Remaining</th>
+<th>Status</th>
+
+</tr>
+
+
+<tr>
+
+<td>263002541236</td>
+<td>SURYODAY</td>
+<td>5000</td>
+<td>8.1</td>
+<td>2028-10-09</td>
+<td>902</td>
+<td>Active</td>
+
+</tr>
+
+
+<tr>
+
+<td>80243040005468</td>
+<td>UNITY</td>
+<td>12100</td>
+<td>7.5</td>
+<td>2027-04-19</td>
+<td>363</td>
+<td>Active</td>
+
+</tr>
+
+</table>
+
+
+</div>
+
+
+
+<script>
+
+
+// Maturity Ladder
+
+new Chart(
+
+document.getElementById("maturityLadder"),
+
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+
+"SURYODAY",
+
+"UNITY"
+
+],
+
+datasets: [{
+
+label: "Days Remaining",
+
+data: [
+
+902,
+
+363
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Principal Distribution
+
+new Chart(
+
+document.getElementById("principalDistribution"),
+
+{
+
+type: "pie",
+
+data: {
+
+labels: [
+
+"SURYODAY",
+
+"UNITY"
+
+],
+
+datasets: [{
+
+data: [
+
+5000,
+
+12100
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Interest Rate Chart
+
+new Chart(
+
+document.getElementById("interestRateChart"),
+
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+
+"SURYODAY",
+
+"UNITY"
+
+],
+
+datasets: [{
+
+label: "Interest Rate",
+
+data: [
+
+8.1,
+
+7.5
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+// Liquidity Timeline
+
+new Chart(
+
+document.getElementById("liquidityTimeline"),
+
+{
+
+type: "line",
+
+data: {
+
+labels: [
+
+"2027",
+
+"2028"
+
+],
+
+datasets: [{
+
+label: "Maturity Value",
+
+data: [
+
+13033,
+
+6110
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+</script>
+
+
+</body>
+
+</html>

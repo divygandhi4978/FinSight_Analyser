@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Equity Holdings</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body {
+font-family: Arial;
+margin: 0;
+}
+
+.container {
+padding: 20px;
+}
+
+.chart-grid {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 20px;
+}
+
+.chart-box {
+border: 1px solid black;
+padding: 10px;
+height: 350px;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 20px;
+}
+
+th, td {
+border: 1px solid black;
+padding: 5px;
+text-align: left;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Equity Holdings</h1>
+
+<div class="chart-grid">
+
+<div class="chart-box">
+<h3>Holding Allocation %</h3>
+<canvas id="holdingPercentChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Holding Value</h3>
+<canvas id="holdingValueChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Units Distribution</h3>
+<canvas id="unitsChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Concentration Risk</h3>
+<canvas id="concentrationChart"></canvas>
+</div>
+
+</div>
+
+
+<table>
+
+<tr>
+<th>Company</th>
+<th>Units</th>
+<th>Value</th>
+<th>%</th>
+</tr>
+
+<tr>
+<td>NTPCGREEN</td>
+<td>1560</td>
+<td>176124</td>
+<td>22.05</td>
+</tr>
+
+<tr>
+<td>MAXHEALTH</td>
+<td>148</td>
+<td>149953</td>
+<td>21.34</td>
+</tr>
+
+</table>
+
+</div>
+
+
+<script>
+
+new Chart(
+document.getElementById("holdingPercentChart"),
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+"NTPCGREEN",
+"MAXHEALTH",
+"ADANIPORTS",
+"CAMS"
+],
+
+datasets: [{
+
+data: [
+22.05,
+21.34,
+19.89,
+19.07
+]
+
+}]
+
+}
+
+}
+);
+
+
+new Chart(
+document.getElementById("holdingValueChart"),
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+"NTPCGREEN",
+"MAXHEALTH",
+"ADANIPORTS",
+"CAMS"
+],
+
+datasets: [{
+
+data: [
+176124,
+149953,
+161196,
+159328
+]
+
+}]
+
+}
+
+}
+);
+
+
+new Chart(
+document.getElementById("unitsChart"),
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+"NTPCGREEN",
+"MAXHEALTH",
+"ADANIPORTS",
+"CAMS"
+],
+
+datasets: [{
+
+data: [
+1560,
+148,
+101,
+212
+]
+
+}]
+
+}
+
+}
+);
+
+
+new Chart(
+document.getElementById("concentrationChart"),
+{
+
+type: "pie",
+
+data: {
+
+labels: [
+"Top Holdings",
+"Others"
+],
+
+datasets: [{
+
+data: [
+80,
+20
+]
+
+}]
+
+}
+
+}
+);
+
+</script>
+
+</body>
+
+</html>

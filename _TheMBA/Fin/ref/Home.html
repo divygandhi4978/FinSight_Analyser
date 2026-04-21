@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Portfolio Overview</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body {
+font-family: Arial;
+margin: 0;
+background: white;
+}
+
+.container {
+padding: 20px;
+}
+
+h1 {
+border-bottom: 1px solid black;
+padding-bottom: 10px;
+}
+
+.kpi-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 10px;
+margin-bottom: 20px;
+}
+
+.kpi {
+border: 1px solid black;
+padding: 10px;
+}
+
+.chart-grid {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 20px;
+}
+
+.chart-box {
+border: 1px solid black;
+padding: 10px;
+height: 350px;
+}
+
+canvas {
+width: 100% !important;
+height: 100% !important;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Portfolio Overview</h1>
+
+<div class="kpi-grid">
+
+<div class="kpi">
+<h3>Total Value</h3>
+<p>1216496</p>
+</div>
+
+<div class="kpi">
+<h3>Total Stocks</h3>
+<p>870058</p>
+</div>
+
+<div class="kpi">
+<h3>Total MFs</h3>
+<p>109623</p>
+</div>
+
+<div class="kpi">
+<h3>Total FD</h3>
+<p>17100</p>
+</div>
+
+</div>
+
+
+<div class="chart-grid">
+
+<div class="chart-box">
+<h3>Asset Allocation</h3>
+<canvas id="allocationChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Asset Value Distribution</h3>
+<canvas id="assetBarChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Top Holdings</h3>
+<canvas id="topHoldingsChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Portfolio Composition</h3>
+<canvas id="compositionChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+// Allocation
+
+new Chart(
+document.getElementById("allocationChart"),
+{
+type: "doughnut",
+
+data: {
+
+labels: [
+"Stocks",
+"MFs",
+"Unlisted",
+"REIT",
+"QQQ",
+"FD"
+],
+
+datasets: [{
+
+data: [
+870058,
+109623,
+68040,
+28065,
+51607,
+17100
+]
+
+}]
+
+}
+
+}
+);
+
+
+// Asset Bar
+
+new Chart(
+document.getElementById("assetBarChart"),
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+"Stocks",
+"MFs",
+"Unlisted",
+"REIT",
+"QQQ",
+"FD"
+],
+
+datasets: [{
+
+label: "Asset Values",
+
+data: [
+870058,
+109623,
+68040,
+28065,
+51607,
+17100
+]
+
+}]
+
+}
+
+}
+);
+
+
+// Top Holdings
+
+new Chart(
+document.getElementById("topHoldingsChart"),
+{
+
+type: "bar",
+
+data: {
+
+labels: [
+"NTPCGREEN",
+"MAXHEALTH",
+"ADANIPORTS",
+"CAMS"
+],
+
+datasets: [{
+
+label: "Holding %",
+
+data: [
+22.05,
+21.34,
+19.89,
+19.07
+]
+
+}]
+
+}
+
+}
+);
+
+
+// Composition
+
+new Chart(
+document.getElementById("compositionChart"),
+{
+
+type: "pie",
+
+data: {
+
+labels: [
+"Top 4 Stocks",
+"Others"
+],
+
+datasets: [{
+
+data: [
+80,
+20
+]
+
+}]
+
+}
+
+}
+);
+
+</script>
+
+</body>
+
+</html>

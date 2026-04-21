@@ -210,38 +210,36 @@ def clean_all_investment(df):
 # =====================================
 # REBUILD HEADER FROM A GIVEN ROW
 # =====================================
-
 def rebuild_header(df: pd.DataFrame, header_row: int) -> pd.DataFrame:
+    if df is None or df.empty:
+        return df
+        
     df = df.copy()
-
+    
+    # 1. Extract and clean headers from the specific row
     headers = (
         df.iloc[header_row]
-        .fillna("")
+        .fillna("Unnamed")
         .astype(str)
         .str.strip()
         .str.replace(" ", "_", regex=False)
     )
 
-    # Make headers unique enough to avoid collisions
+    # 2. Handle duplicate column names to prevent Pandas errors
     cleaned_headers = []
     seen = {}
-
-    for h in headers.tolist():
-        h = h if h else "Unnamed"
+    for h in headers:
         if h in seen:
             seen[h] += 1
-            h = f"{h}_{seen[h]}"
+            cleaned_headers.append(f"{h}_{seen[h]}")
         else:
             seen[h] = 0
-        cleaned_headers.append(h)
+            cleaned_headers.append(h)
 
     df.columns = cleaned_headers
-    df = df.iloc[header_row + 1 :].reset_index(drop=True)
-    df = df.dropna(how="all")
-    df = drop_empty_columns(df)
-
-    return df
-
+    
+    # 3. CRITICAL: Start data from EXACTLY one row after header
+    return df.iloc[header_row + 1 :].reset_index(drop=True).dropna(how="all")
 
 # =====================================
 # CLEAN KVP
